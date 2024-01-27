@@ -1,8 +1,8 @@
 import argparse
-import wandb
-import subprocess as sp
 import copy
+import subprocess as sp
 
+import wandb
 
 parser = argparse.ArgumentParser()
 
@@ -21,9 +21,7 @@ parser.add_argument(
 
 # Agent Args
 parser.add_argument(
-    "--config",
-    type=str,
-    help="Name of .py config file with no extension."
+    "--config", type=str, help="Name of .py config file with no extension."
 )
 parser.add_argument(
     "--devices", nargs="+", help="list of devices to run on", default=[0, 1, 2]
@@ -32,12 +30,16 @@ parser.add_argument(
     "--n_examples", type=int, help="number of data examples", default=int(1e6)
 )
 parser.add_argument(
-    "--no_data_gen", action='store_true', help="don't sweep through dataset generation"
+    "--no_data_gen", action="store_true", help="don't sweep through dataset generation"
 )
 
 args = parser.parse_args()
 
-exec("from configs.experiments.{} import master_config, logger_config".format(args.config))
+exec(
+    "from configs.experiments.{} import master_config, logger_config".format(
+        args.config
+    )
+)
 exec("from configs.sweeps.{} import sweep_config".format(args.sweep_config))
 
 dataset_in_sweep = sum(["dataset" in x for x in sweep_config["parameters"].keys()]) > 0
@@ -50,7 +52,7 @@ if dataset_in_sweep:
         if k.startswith("dataset"):
             new_k = k[8:]
             data_sweep_config["parameters"][new_k] = v
-    if len(data_sweep_config) > 0:    
+    if len(data_sweep_config) > 0:
         data_sweep_id = wandb.sweep(
             data_sweep_config,
             project=logger_config["params"]["data_project"],
@@ -93,7 +95,7 @@ for i in range(args.n_agents):
         logger_config["params"]["entity"],
     )
     print(command)
-    commands.append(command) 
+    commands.append(command)
 
 processes = [sp.Popen(command, shell=True) for command in commands]
 for p in processes:

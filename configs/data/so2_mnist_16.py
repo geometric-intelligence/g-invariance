@@ -1,7 +1,13 @@
-from transform_datasets.patterns.natural import MNIST
-from transform_datasets.transforms import SO2, CenterMean, UnitStd, AddChannelDim, Resize, CircleCrop
 from torch_tools.config import Config
-
+from transform_datasets.patterns.natural import MNIST
+from transform_datasets.transforms import (
+    SO2,
+    AddChannelDim,
+    CenterMean,
+    CircleCrop,
+    Resize,
+    UnitStd,
+)
 
 """
 DATASET
@@ -19,36 +25,13 @@ transforms_config = {
     "0": Config(
         {
             "type": SO2,
-            "params": {
-                "sample_method": "random"
-            },
+            "params": {"sample_method": "random"},
         }
     ),
-    "1": Config(
-        {
-            "type": Resize,
-            "params": 
-            {
-                "new_size": (16, 16)
-            }
-        }
-    ),
-    "2": Config(
-        {
-            "type": CircleCrop,
-            "params": 
-            {}
-        }
-    ),
-    "3": Config(
-        {
-            "type": AddChannelDim,
-            "params": {}
-        }
-    )
+    "1": Config({"type": Resize, "params": {"new_size": (16, 16)}}),
+    "2": Config({"type": CircleCrop, "params": {}}),
+    "3": Config({"type": AddChannelDim, "params": {}}),
 }
 
 
-dataset_config = {"pattern": pattern_config, 
-                  "transforms": transforms_config,
-                  "seed": 0}
+dataset_config = {"pattern": pattern_config, "transforms": transforms_config, "seed": 0}

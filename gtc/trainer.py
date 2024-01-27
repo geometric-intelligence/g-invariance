@@ -1,10 +1,10 @@
-from torch_tools.trainer import Trainer
-import torch
 from collections import OrderedDict
+
+import torch
+from torch_tools.trainer import Trainer
 
 
 class GTrainer(Trainer):
-    
     def __init__(
         self,
         model,
@@ -22,25 +22,25 @@ class GTrainer(Trainer):
             logger=logger,
             scheduler=scheduler,
             regularizer=regularizer,
-            normalizer=normalizer
+            normalizer=normalizer,
         )
-        
+
     def __getstate__(self):
         d = self.__dict__
-        self_dict = {k : d[k] for k in d if k != '_modules'}
-        module_dict = OrderedDict({'loss': self.loss})
+        self_dict = {k: d[k] for k in d if k != "_modules"}
+        module_dict = OrderedDict({"loss": self.loss})
         if self.regularizer is not None:
             module_dict["regularizer"] = self.regularizer
         if self.normalizer is not None:
             module_dict["normalizer"] = self.normalizer
         if self.scheduler is not None:
             module_dict["scheduler"] = self.scheduler
-        self_dict['_modules'] = module_dict
+        self_dict["_modules"] = module_dict
         return self_dict
 
     def __setstate__(self, state):
         self.__dict__ = state
-        
+
     def step(self, data_loader, grad=True):
         """Compute a single step of training.
 
@@ -61,10 +61,8 @@ class GTrainer(Trainer):
             Your dictionary must contain a key called `total_loss`
 
         """
-        log_dict = {"loss": 0, 
-                    "reg_loss": 0, 
-                    "total_loss": 0,
-                    "accuracy": 0}
+        # torch.autograd.set_detect_anomaly(True)
+        log_dict = {"loss": 0, "reg_loss": 0, "total_loss": 0, "accuracy": 0}
         for i, (x, labels) in enumerate(data_loader):
             loss = 0
             reg_loss = 0
@@ -88,13 +86,14 @@ class GTrainer(Trainer):
             log_dict["loss"] += loss
             log_dict["accuracy"] += accuracy
             total_loss += loss
-
             # Compute regularization penalty terms (e.g. sparsity, l2 norm, etc.)
             if self.regularizer is not None:
                 reg_variable_dict = {
                     "x": x,
                     "out": out,
-                } | dict(self.model.named_parameters()) # Must use named parameters rather than state_dict to preserve grads
+                } | dict(
+                    self.model.named_parameters()
+                )  # Must use named parameters rather than state_dict to preserve grads
 
                 reg_loss += self.regularizer(reg_variable_dict)
                 log_dict["reg_loss"] += reg_loss
@@ -103,7 +102,7 @@ class GTrainer(Trainer):
             if grad:
                 total_loss.backward()
                 self.optimizer.step()
-                
+
             if self.normalizer is not None:
                 self.normalizer(dict(self.model.named_parameters()))
 
@@ -117,11 +116,13 @@ class GTrainer(Trainer):
         plot_variable_dict = {"model": self.model}
 
         return log_dict, plot_variable_dict
-    
-    def print_update(self, result_dict_train, result_dict_val=None):
 
+    def print_update(self, result_dict_train, result_dict_val=None):
         update_string = "Epoch {} ||  N Examples {} || Train Total Loss {:0.5f} || Train Accuracy {:0.5f}".format(
-            self.epoch, self.n_examples, result_dict_train["total_loss"], result_dict_train["accuracy"]
+            self.epoch,
+            self.n_examples,
+            result_dict_train["total_loss"],
+            result_dict_train["accuracy"],
         )
         if result_dict_val:
             update_string += " || Validation Total Loss {:0.5f} || Validation Accuracy {:0.5f}".format(

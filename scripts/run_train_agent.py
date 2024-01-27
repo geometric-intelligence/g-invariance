@@ -1,13 +1,11 @@
-import wandb
 import argparse
+import torch
+import wandb
 from gtc.utils import run_trainer
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
-    "--config",
-    type=str,
-    help="Name of .py config file with no extension."
+    "--config", type=str, help="Name of .py config file with no extension."
 )
 parser.add_argument("--device", type=int, help="device to run on", default=0)
 parser.add_argument(
@@ -20,21 +18,27 @@ parser.add_argument("-sweep_id", type=str, help="id for sweep")
 
 args = parser.parse_args()
 
-exec("from configs.experiments.{} import master_config, logger_config".format(args.config))
+exec(
+    "from configs.experiments.{} import master_config, logger_config".format(
+        args.config
+    )
+)
 
 
-logger_config.params["entity"] = args.entity
-logger_config.params["project"] = args.project
+# logger_config.params["entity"] = args.entity
+# logger_config.params["project"] = args.project
+
 
 def run_wrapper():
     run_trainer(
         master_config=master_config,
         logger_config=logger_config,
-        device=args.device,
+        device=torch.device("cpu"),  # args.device,
         n_examples=args.n_examples,
-        entity=args.entity,
-        project=args.project
+        entity="simonmataigne",
+        project="bispectrumnn",
     )
+
 
 if args.sweep_id is not None:
     wandb.agent(

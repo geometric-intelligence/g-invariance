@@ -1,12 +1,14 @@
-from transform_datasets.utils.wandb import load_dataset, create_dataset
+import copy
 from collections import OrderedDict
+
 import numpy as np
 import torch
-import copy
-import wandb
 from torch_tools.config import Config
 from torch_tools.trainer import Trainer
+from transform_datasets.utils.wandb import create_dataset, load_dataset
+
 import gtc
+import wandb
 
 
 def create_model(block_configs, data_loader):
@@ -14,8 +16,12 @@ def create_model(block_configs, data_loader):
     i = 0
     for name, config in block_configs.items():
         if i > 0:
-            config.params["in_type"] = block.out_type # Previous block
-        if config.type == gtc.modules.FullyConnectedBlock or config.type == gtc.modules.Linear or config.type == gtc.modules.BatchNorm1D:
+            config.params["in_type"] = block.out_type  # Previous block
+        if (
+            config.type == gtc.modules.FullyConnectedBlock
+            or config.type == gtc.modules.Linear
+            or config.type == gtc.modules.BatchNorm1D
+        ):
             x, y = next(iter(data_loader.train))
             with torch.no_grad():
                 for k, b in blocks.items():
@@ -31,18 +37,23 @@ def create_model(block_configs, data_loader):
 
 def load_checkpoint(logdir, device="cpu"):
     from torch_tools.config import Config
+
     checkpoint = torch.load(logdir, map_location=device)
     trainer = checkpoint["trainer"]
-    data_loader = Config(trainer.logger.config['data_loader']).build()
-    dataset_config = trainer.logger.config['dataset']
-    dataset = load_dataset(dataset_config, project=trainer.logger.data_project, entity=trainer.logger.entity)
+    data_loader = Config(trainer.logger.config["data_loader"]).build()
+    dataset_config = trainer.logger.config["dataset"]
+    dataset = load_dataset(
+        dataset_config,
+        project=trainer.logger.data_project,
+        entity=trainer.logger.entity,
+    )
     data_loader.load(dataset)
     if not hasattr(checkpoint, "model"):
         for k, v in trainer.logger.config["model"].items():
             trainer.logger.config["model"][k] = Config(v)
         model = create_model(trainer.logger.config["model"], data_loader)
         trainer.model = model
-        trainer.model.load_state_dict(checkpoint['model_state_dict'], strict=False)
+        trainer.model.load_state_dict(checkpoint["model_state_dict"], strict=False)
 
     optimizer_config = Config(copy.deepcopy(trainer.logger.config["optimizer"]))
     optimizer_config["params"]["params"] = trainer.model.parameters()
@@ -61,12 +72,18 @@ def load_wandb_checkpoint(entity, project, run_id, epoch=None):
             if epoch < 0:
                 raise Exception("No saved checkpoints.")
             try:
-                checkpoint_path = wandb.restore('checkpoints/checkpoint_{}.pt'.format(epoch), run_path="{}/{}/{}".format(entity, project, run_id)).name
+                checkpoint_path = wandb.restore(
+                    "checkpoints/checkpoint_{}.pt".format(epoch),
+                    run_path="{}/{}/{}".format(entity, project, run_id),
+                ).name
                 loaded = True
             except:
                 epoch -= 1
-    else: 
-        checkpoint_path = wandb.restore('checkpoints/checkpoint_{}.pt'.format(epoch), run_path="{}/{}/{}".format(entity, project, run_id)).name
+    else:
+        checkpoint_path = wandb.restore(
+            "checkpoints/checkpoint_{}.pt".format(epoch),
+            run_path="{}/{}/{}".format(entity, project, run_id),
+        ).name
     checkpoint, trainer, data_loader = load_checkpoint(checkpoint_path)
     return checkpoint, trainer, data_loader
 
@@ -74,7 +91,6 @@ def load_wandb_checkpoint(entity, project, run_id, epoch=None):
 def nest_dict(dict1):
     result = {}
     for k, v in dict1.items():
-
         # for each key call method split_rec which
         # will split keys to form recursively
         # nested dictionary
@@ -83,7 +99,6 @@ def nest_dict(dict1):
 
 
 def split_rec(k, v, out, sep="."):
-
     # splitting keys in dict
     # calling_recursively to break items on '_'
     k, *rest = k.split(sep, 1)
@@ -119,7 +134,7 @@ def nested_set(dic, keys, value):
         dic = dic.setdefault(key, {})
     dic[keys[-1]] = value
 
-    
+
 def nested_get(dic, keys):
     for key in keys[:-1]:
         dic = dic.setdefault(key, {})
@@ -149,26 +164,31 @@ def fix_wandb_config(wandb_config, master_config):
     return new_config
 
 
-def run_trainer(master_config, 
-                logger_config,
-                device=0, 
-                n_examples=1e9,
-                entity=None,
-                project=None):
-        
+def run_trainer(  # previously device=0
+    master_config,
+    logger_config,
+    device=torch.device("cpu"),
+    n_examples=1e9,
+    entity=None,
+    project=None,
+):
     flat_config = flatten_dict(master_config)
 
     with wandb.init(config=flat_config, entity=entity, project=project) as run:
         new_config = fix_wandb_config(wandb.config, master_config)
-                
-        dataset = load_dataset(new_config["dataset"], 
-                               logger_config["params"]["data_project"], 
-                               logger_config["params"]["entity"])
+
+        dataset = load_dataset(
+            new_config["dataset"],
+            logger_config["params"]["data_project"],
+            logger_config["params"]["entity"],
+        )
 
         data_loader = new_config["data_loader"].build()
         data_loader.load(dataset)
 
-        trainer = construct_trainer(master_config, logger_config, new_config, data_loader)
+        trainer = construct_trainer(
+            master_config, logger_config, new_config, data_loader
+        )
 
         epochs = int(n_examples // len(data_loader.train.dataset.data))
         trainer.model.device = device
@@ -198,15 +218,15 @@ def construct_trainer(master_config, logger_config, wandb_config, data_loader):
 
     with optional regularizer, normalizer, and learning rate scheduler
     """
-    
+
     torch.manual_seed(wandb_config["seed"])
     np.random.seed(wandb_config["seed"])
-        
-    #CURRENTLY, SWEEPS ON MODEL HYPERPARAMS WILL NOT WORK
+
+    # CURRENTLY, SWEEPS ON MODEL HYPERPARAMS WILL NOT WORK
     model = create_model(master_config["model"], data_loader)
-    
+
     loss = wandb_config["loss"].build()
-    
+
     logger_config["params"]["config"] = wandb_config
     logger = logger_config.build()
 
@@ -218,7 +238,7 @@ def construct_trainer(master_config, logger_config, wandb_config, data_loader):
         trainer_type = Trainer
     else:
         trainer_type = master_config["trainer"]
-        
+
     train_config = Config(
         {
             "type": trainer_type,
@@ -238,13 +258,13 @@ def construct_trainer(master_config, logger_config, wandb_config, data_loader):
     if "normalizer" in wandb_config:
         normalizer = wandb_config["normalizer"].build()
         train_config["params"]["normalizer"] = normalizer
-        
+
     if "scheduler" in wandb_config:
         scheduler_config = copy.deepcopy(wandb_config["scheduler"])
         scheduler_config["params"]["optimizer"] = optimizer
         scheduler = scheduler_config.build()
         train_config["params"]["scheduler"] = scheduler
-        
+
     trainer = train_config.build()
-    
+
     return trainer

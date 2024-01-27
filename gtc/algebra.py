@@ -70,8 +70,8 @@ def compute_non_redundant_tc_indices_cyclic(N=8):
         (int(g1), int(g2)) for g1, g2 in zip(first_indices, second_indices)
     )
     nonredundant_indices = _remove_redundant_indices(indices_set, c_group)
-    row_idx = np.zeros(len(nonredundant_indices), dtype=np.int)
-    col_idx = np.zeros(len(nonredundant_indices), dtype=np.int)
+    row_idx = np.zeros(len(nonredundant_indices), dtype=int)
+    col_idx = np.zeros(len(nonredundant_indices), dtype=int)
     for i, idx in enumerate(nonredundant_indices):
         row_idx[i] = idx[0]
         col_idx[i] = idx[1]
@@ -115,11 +115,13 @@ def compute_non_redundant_tc_indices_dihedral(N=8):
     indices_set = set(
         (g1, g2) for g1, g2 in zip(first_multi_indices, second_multi_indices)
     )
-    
-    row_idx = np.zeros(len(indices_set), dtype=np.int)
-    col_idx = np.zeros(len(indices_set), dtype=np.int)
+
+    row_idx = np.zeros(len(indices_set), dtype=int)
+    col_idx = np.zeros(len(indices_set), dtype=int)
     for i, idx in enumerate(indices_set):
-        import pdb; pdb.set_trace()
+        import pdb
+
+        pdb.set_trace()
         row_idx[i] = idx[0]
         col_idx[i] = idx[1]
     return row_idx, col_idx
