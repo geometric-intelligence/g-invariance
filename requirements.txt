@@ -1,7 +1,7 @@
 numpy
 wandb
 matplotlib
-jupyter
+#jupyter
 seaborn
 pandas
 torch>=1.3

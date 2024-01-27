@@ -1,6 +1,6 @@
 from collections import defaultdict
 from typing import Any, List, Tuple
-
+import einops
 import numpy as np
 import torch
 from escnn.gspaces import *
@@ -334,13 +334,8 @@ class BspGroupPooling(GroupPooling):
         # Create omega tensor
         omega = 2 * torch.pi * i_range[:, None] * j_range / n
         # Create rho tensor
-        print(omega)
-        rho = torch.tensor(
-            [
-                [torch.cos(omega), -torch.sin(omega)],
-                [torch.sin(omega), torch.cos(omega)]
-            ]
-        ) #rho.shape = [2, 2, n2d, n]
+        rho = torch.concat((torch.cos(omega),-torch.sin(omega),torch.sin(omega),torch.cos(omega)))
+        rho = einops.rearrange(rho, '(c1 c2 w) h  -> c1 c2 w h', c1=2, c2=2)
         rho1 = rho.clone()
         rho1[:, 1] *= -1
         fhat[..., 1:n2d+1] = torch.sum(f[:, :, None, None, None, j_range] * rho[None, None, :, :, :], dim = 5)
