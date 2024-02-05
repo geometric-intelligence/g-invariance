@@ -7,7 +7,7 @@ from gtc.algebra import compute_non_redundant_tc_indices_dihedral
 from gtc.modules import FullyConnectedBlock, GonR2ConvBlock, GTtoT, Linear, Ravel
 from gtc.pooling import TCGroupPooling
 
-N = 8
+N = 16
 
 
 """
@@ -20,7 +20,7 @@ conv1 = Config(
         "params": {
             "N": N,
             "action": gspaces.flipRot2dOnR2,
-            "n_channels": 24,
+            "n_channels": 4,
             "kernel_size": 16,
             "nonlinearity": None,
             "padding": 0,

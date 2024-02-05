@@ -6,7 +6,7 @@ from torch_tools.config import Config
 from gtc.modules import FullyConnectedBlock, GonR2ConvBlock, GTtoT, Linear, Ravel
 from gtc.pooling import GroupPooling
 
-N = 8
+N = 16
 
 
 """
@@ -19,7 +19,7 @@ conv1 = Config(
         "params": {
             "N": N,
             "action": gspaces.flipRot2dOnR2,
-            "n_channels": 24,
+            "n_channels": 4,
             "kernel_size": 16,
             "padding": 0,
             "bias": False,
@@ -68,7 +68,7 @@ ravel = Config(
 FC1
 """
 
-FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 2380}})
+FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 1850}})
 
 
 """

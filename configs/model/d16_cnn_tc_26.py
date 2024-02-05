@@ -5,7 +5,7 @@ from torch_tools.config import Config
 
 from gtc.algebra import compute_non_redundant_tc_indices_dihedral
 from gtc.modules import FullyConnectedBlock, GonR2ConvBlock, GTtoT, Linear, Ravel
-from gtc.pooling import BspGroupPooling
+from gtc.pooling import TCGroupPooling
 
 N = 8
 
@@ -36,7 +36,7 @@ GROUP POOL
 
 gpool = Config(
     {
-        "type": BspGroupPooling,
+        "type": TCGroupPooling,
         "params": {"idx": None, "group_type": "dihedral"},
     }
 )
@@ -58,7 +58,7 @@ ravel = Config(
 FC1
 """
 
-FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 500}})
+FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 50}})
 
 
 """
@@ -78,7 +78,7 @@ FC3 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 64}})
 """
 LINEAR
 """
-linear = Config({"type": Linear, "params": {"out_dim": 10}})
+linear = Config({"type": Linear, "params": {"out_dim": 26}})
 
 
 """

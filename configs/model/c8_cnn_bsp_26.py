@@ -3,8 +3,15 @@ from collections import OrderedDict
 from escnn import gspaces, nn
 from torch_tools.config import Config
 
-from gtc.algebra import compute_non_redundant_tc_indices_dihedral
-from gtc.modules import FullyConnectedBlock, GonR2ConvBlock, GTtoT, Linear, Ravel
+#from gtc.algebra import compute_non_redundant_tc_indices_cyclic
+from gtc.modules import (
+    BatchNorm1D,
+    FullyConnectedBlock,
+    GonR2ConvBlock,
+    GTtoT,
+    Linear,
+    Ravel,
+)
 from gtc.pooling import BspGroupPooling
 
 N = 8
@@ -13,16 +20,15 @@ N = 8
 """
 CONV 1
 """
-
 conv1 = Config(
     {
         "type": GonR2ConvBlock,
         "params": {
             "N": N,
-            "action": gspaces.flipRot2dOnR2,
-            "n_channels": 4,
-            "kernel_size": 16,
+            "action": gspaces.rot2dOnR2,
             "nonlinearity": None,
+            "n_channels": 24,
+            "kernel_size": 16,
             "padding": 0,
             "bias": False,
         },
@@ -37,7 +43,10 @@ GROUP POOL
 gpool = Config(
     {
         "type": BspGroupPooling,
-        "params": {"idx": None, "group_type": "dihedral"},
+        "params": {
+            "idx": None,  # compute_non_redundant_tc_indices_cyclic(N=N),
+            "group_type": "cyclic",
+        },
     }
 )
 
@@ -58,27 +67,27 @@ ravel = Config(
 FC1
 """
 
-FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 500}})
+FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 26}})
 
 
 """
 FC2
 """
 
-FC2 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 64}})
+FC2 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 26}})
 
 
 """
 FC3
 """
 
-FC3 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 64}})
+FC3 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 26}})
 
 
 """
 LINEAR
 """
-linear = Config({"type": Linear, "params": {"out_dim": 10}})
+linear = Config({"type": Linear, "params": {"out_dim": 26}})
 
 
 """

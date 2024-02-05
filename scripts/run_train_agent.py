@@ -33,10 +33,11 @@ def run_wrapper():
     run_trainer(
         master_config=master_config,
         logger_config=logger_config,
-        device=torch.device("cpu"),  # args.device,
+        device= args.device,#torch.device("cpu"),  # args.device,
         n_examples=args.n_examples,
         entity="simonmataigne",
         project="bispectrumnn",
+        config=args.config # Nina.
     )
 
 

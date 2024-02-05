@@ -3,9 +3,8 @@ from collections import OrderedDict
 from escnn import gspaces, nn
 from torch_tools.config import Config
 
-from gtc.algebra import compute_non_redundant_tc_indices_dihedral
 from gtc.modules import FullyConnectedBlock, GonR2ConvBlock, GTtoT, Linear, Ravel
-from gtc.pooling import BspGroupPooling
+from gtc.pooling import GroupPooling
 
 N = 8
 
@@ -19,10 +18,9 @@ conv1 = Config(
         "type": GonR2ConvBlock,
         "params": {
             "N": N,
-            "action": gspaces.flipRot2dOnR2,
-            "n_channels": 4,
+            "action": gspaces.rot2dOnR2,
+            "n_channels": 24,
             "kernel_size": 16,
-            "nonlinearity": None,
             "padding": 0,
             "bias": False,
         },
@@ -36,8 +34,20 @@ GROUP POOL
 
 gpool = Config(
     {
-        "type": BspGroupPooling,
-        "params": {"idx": None, "group_type": "dihedral"},
+        "type": GroupPooling,
+        "params": {},
+    }
+)
+
+
+"""
+GT to T
+"""
+
+gttot = Config(
+    {
+        "type": GTtoT,
+        "params": {},
     }
 )
 
@@ -58,7 +68,7 @@ ravel = Config(
 FC1
 """
 
-FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 500}})
+FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 275}})
 
 
 """
@@ -78,7 +88,7 @@ FC3 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 64}})
 """
 LINEAR
 """
-linear = Config({"type": Linear, "params": {"out_dim": 10}})
+linear = Config({"type": Linear, "params": {"out_dim": 26}})
 
 
 """
@@ -89,6 +99,7 @@ model_config = OrderedDict(
     {
         "conv1": conv1,
         "gpool": gpool,
+        "gttot": gttot,
         "ravel": ravel,
         "FC1": FC1,
         "FC2": FC2,

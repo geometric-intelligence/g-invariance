@@ -9,9 +9,9 @@ data_loader_config = Config(
     {
         "type": TrainValLoader,
         "params": {
-            "batch_size": 64, 
+            "batch_size": 200, 
             "fraction_val": 0.2,
-            "num_workers": 1,
+            "num_workers": 5,
         },
     }
 )

@@ -20,7 +20,7 @@ conv1 = Config(
         "params": {
             "N": N,
             "action": gspaces.flipRot2dOnR2,
-            "n_channels": 4,
+            "n_channels": 20,
             "kernel_size": 16,
             "nonlinearity": None,
             "padding": 0,
@@ -58,7 +58,7 @@ ravel = Config(
 FC1
 """
 
-FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 500}})
+FC1 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 32}})
 
 
 """
@@ -78,7 +78,7 @@ FC3 = Config({"type": FullyConnectedBlock, "params": {"out_dim": 64}})
 """
 LINEAR
 """
-linear = Config({"type": Linear, "params": {"out_dim": 10}})
+linear = Config({"type": Linear, "params": {"out_dim": 26}})
 
 
 """

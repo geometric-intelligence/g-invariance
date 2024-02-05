@@ -167,15 +167,18 @@ def fix_wandb_config(wandb_config, master_config):
 def run_trainer(  # previously device=0
     master_config,
     logger_config,
-    device=torch.device("cpu"),
+    device=torch.device('cuda'),
     n_examples=1e9,
     entity=None,
     project=None,
+    config=None # Nina.
 ):
     flat_config = flatten_dict(master_config)
 
     with wandb.init(config=flat_config, entity=entity, project=project) as run:
         new_config = fix_wandb_config(wandb.config, master_config)
+        # Nina.
+        wandb.log({"experiment_config": config}) # Nina.
 
         dataset = load_dataset(
             new_config["dataset"],
@@ -185,7 +188,7 @@ def run_trainer(  # previously device=0
 
         data_loader = new_config["data_loader"].build()
         data_loader.load(dataset)
-
+        #print("MES LABELS==",dataset.labels)
         trainer = construct_trainer(
             master_config, logger_config, new_config, data_loader
         )
@@ -193,6 +196,10 @@ def run_trainer(  # previously device=0
         epochs = int(n_examples // len(data_loader.train.dataset.data))
         trainer.model.device = device
         trainer.model = trainer.model.to(device)
+        #print('mymodel=', trainer.model.device)
+        num_params = sum(param.numel() for param in trainer.model.parameters() if param.requires_grad)
+        print(num_params)
+
         trainer.train(data_loader, epochs=epochs)
 
 

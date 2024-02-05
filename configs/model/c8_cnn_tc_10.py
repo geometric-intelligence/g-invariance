@@ -27,7 +27,7 @@ conv1 = Config(
             "N": N,
             "action": gspaces.rot2dOnR2,
             "nonlinearity": None,
-            "n_channels": 24,
+            "n_channels": 10,
             "kernel_size": 16,
             "padding": 0,
             "bias": False,
