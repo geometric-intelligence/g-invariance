@@ -1,4 +1,4 @@
-from torch_tools.config import Config
+from gtc.utils import Config
 from transform_datasets.patterns.natural import ModelNet10Voxel
 from transform_datasets.transforms import AddChannelDim, OctahedralRotation
 

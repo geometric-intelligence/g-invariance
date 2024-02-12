@@ -20,10 +20,3 @@ master_config = {
     "trainer": GTrainer,
     "seed": 0,
 }
-
-
-"""
-LOGGER CONFIG
-"""
-
-from configs.logger.wandb_logger import logger_config

@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from escnn import gspaces, nn
-from torch_tools.config import Config
+from gtc.utils import Config
 
 from gtc.algebra import compute_non_redundant_tc_indices_cyclic
 from gtc.modules import (

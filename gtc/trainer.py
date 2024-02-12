@@ -1,7 +1,8 @@
 from collections import OrderedDict
 
 import torch
-from torch_tools.trainer import Trainer
+
+from gtc.utils import Trainer
 
 
 class GTrainer(Trainer):
@@ -68,11 +69,11 @@ class GTrainer(Trainer):
             reg_loss = 0
             total_loss = 0
             accuracy = 0
-            #labels -= 1 #ONLY FOR EMNIST ############################################################
+            # labels -= 1 #ONLY FOR EMNIST ############################################################
             x = x.to(self.model.device)
             labels = labels.to(self.model.device)
-            #print("model = ", self.model.device,"\n")
-            
+            # print("model = ", self.model.device,"\n")
+
             if grad:
                 self.optimizer.zero_grad()
                 out = self.model.forward(x)

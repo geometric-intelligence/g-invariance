@@ -1,5 +1,5 @@
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch_tools.config import Config
+from gtc.utils import Config
 
 """
 SCHEDULER

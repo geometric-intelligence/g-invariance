@@ -1,6 +1,4 @@
 import argparse
-import torch
-import wandb
 from gtc.utils import run_trainer
 
 parser = argparse.ArgumentParser()
@@ -25,25 +23,16 @@ exec(
 )
 
 
-# logger_config.params["entity"] = args.entity
-# logger_config.params["project"] = args.project
-
-
 def run_wrapper():
     run_trainer(
         master_config=master_config,
         logger_config=logger_config,
-        device= args.device,#torch.device("cpu"),  # args.device,
+        device=args.device,
         n_examples=args.n_examples,
-        entity="simonmataigne",
-        project="bispectrumnn",
-        config=args.config # Nina.
+        entity=args.entity,
+        project=args.project,
+        config=args.config,  # Nina.
     )
 
 
-if args.sweep_id is not None:
-    wandb.agent(
-        args.sweep_id, function=run_wrapper, entity=args.entity, project=args.project
-    )
-else:
-    run_wrapper()
+run_wrapper()

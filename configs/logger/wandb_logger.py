@@ -1,5 +1,5 @@
-from torch_tools.config import Config
-from torch_tools.logger import WBLogger
+from gtc.utils import Config
+from gtc.utils import WBLogger
 
 """
 LOGGING
@@ -8,9 +8,9 @@ logger_config = Config(
     {
         "type": WBLogger,
         "params": {
-            "project": "bispectrumnn",
-            "data_project": "bispectrumnn",
-            "entity": "simonmataigne",
+            "project": "bispectrum",
+            "data_project": "bispectrum",
+            "entity": "johan-atmo",
             "log_interval": 1,
             "watch_interval": 1,
             "plot_interval": 1,

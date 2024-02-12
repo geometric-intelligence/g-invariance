@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from escnn import group, gspaces, nn
-from torch_tools.config import Config
+from gtc.utils import Config
 
 from gtc.modules import FullyConnectedBlock, GonR3ConvBlock, GTtoT, Linear, Ravel
 from gtc.pooling import TCGroupPoolingEfficient

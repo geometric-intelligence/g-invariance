@@ -1,4 +1,4 @@
 import torch
-from torch_tools.config import Config
+from gtc.utils import Config
 
 loss_config = Config({"type": torch.nn.CrossEntropyLoss, "params": {}})

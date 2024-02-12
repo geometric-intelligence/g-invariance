@@ -1,11 +1,9 @@
-from torch_tools.config import Config
+from gtc.utils import Config
 from transform_datasets.patterns.natural import MNIST
 from transform_datasets.transforms import (
     SO2,
     AddChannelDim,
-    CenterMean,
     CircleCrop,
-    UnitStd,
 )
 
 """

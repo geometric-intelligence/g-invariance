@@ -1,5 +1,5 @@
 from torch.optim import Adam
-from torch_tools.config import Config
+from gtc.utils import Config
 
 """
 OPTIMIZER
