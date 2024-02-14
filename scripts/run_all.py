@@ -22,13 +22,13 @@ def run_experiments():
         "tc",
         "bsp",
     ]  # fbsp is full bsp, bsp is partial bsp TODO: Implement "fbsp",
-    datasets = ["mnist", "emnist"]
+    datasets = ["mnist"]  # , "emnist"]
 
     # Dataset
     for group_continuous, dataset in itertools.product(groups_continuous, datasets):
         print(f"generating dataset for {group_continuous} {dataset}...")
         # Is the seed necessary for datasets?
-        dataset_config = configs.dataset(group_continuous, dataset, seed=42)
+        dataset_config = configs.get_dataset_config(group_continuous, dataset, seed=42)
         # TODO: Make this work with joblib
         create_dataset_run(
             dataset_config=dataset_config,
@@ -37,11 +37,12 @@ def run_experiments():
         )
 
     # Train
-    for group, group_continuous, dataset in itertools.product(
-        groups, poolings, datasets
+    for group, group_continuous, pooling, dataset, filters in itertools.product(
+        groups, groups_continuous, poolings, datasets, n_filters
     ):
-        config = configs.trainer(group_continuous, group, "maxpool", dataset, n_filters)
+        config = configs.trainer(group_continuous, group, pooling, dataset, filters)
         run_trainer(
+            logger_config=configs.logger_config,
             master_config=config,
             n_examples=100000000,
             entity="johan-atmo",

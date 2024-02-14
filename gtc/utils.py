@@ -5,10 +5,10 @@ from collections import OrderedDict
 
 import numpy as np
 import torch
+import wandb
 from transform_datasets.utils.wandb import create_dataset, load_dataset
 
 import gtc
-import wandb
 
 
 def get_default_args(func):

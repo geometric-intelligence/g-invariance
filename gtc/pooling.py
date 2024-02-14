@@ -1,18 +1,16 @@
-from collections import defaultdict
-from typing import Any, List, Tuple
-
 import einops
 import numpy as np
 import torch
 from escnn.gspaces import *
-from escnn.nn import FieldType, GeometricTensor
-from escnn.nn.modules.equivariant_module import EquivariantModule
+from escnn.nn import GeometricTensor
 from escnn.nn.modules.invariantmaps import GroupPooling
-from escnn.nn.modules.utils import indexes_from_labels
-from torch import nn
 
-from gtc.functional import (build_Fplus_vectorized, buildFplus, clebsch_gordan,
-                            first_last_cb, get_cayley_table)
+from gtc.functional import (
+    build_Fplus_vectorized,
+    clebsch_gordan,
+    first_last_cb,
+    get_cayley_table,
+)
 
 
 class TCGroupPoolingEfficient(GroupPooling):
