@@ -15,6 +15,7 @@ class GTrainer(Trainer):
         scheduler=None,
         regularizer=None,
         normalizer=None,
+        dataset_emnist=False,
     ):
         super().__init__(
             model=model,
@@ -25,6 +26,7 @@ class GTrainer(Trainer):
             regularizer=regularizer,
             normalizer=normalizer,
         )
+        self._is_dataset_emnist = dataset_emnist
 
     def __getstate__(self):
         d = self.__dict__
@@ -69,10 +71,11 @@ class GTrainer(Trainer):
             reg_loss = 0
             total_loss = 0
             accuracy = 0
-            # labels -= 1 #ONLY FOR EMNIST ############################################################
+            if self._is_emnist:
+                labels -= 1
+
             x = x.to(self.model.device)
             labels = labels.to(self.model.device)
-            # print("model = ", self.model.device,"\n")
 
             if grad:
                 self.optimizer.zero_grad()

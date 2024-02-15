@@ -78,14 +78,14 @@ def first_last_cb(n, end=False):
     A = givens(2 * np.pi / n)
     B = givens(2 * np.pi / n)
     S = sc.linalg.schur(np.kron(A, B))
-    l = []
+    list = []
     for i in range(4):
         if np.abs(np.abs(S[0][i, i]) - 1) < epst:
-            l.append(i)
+            list.append(i)
         elif S[0][i + 1, i] < 0:
             S[1][:, i : i + 2] = S[1][:, np.array([i + 1, i])]
     return torch.tensor(S[1], requires_grad=False), torch.tensor(
-        l, dtype=int, requires_grad=False
+        list, dtype=int, requires_grad=False
     )
 
 
@@ -117,7 +117,7 @@ def buildFplus(l, fhat, n, end=False):
 
     if l[1] - l[0] == 1:
         if l[0] == 0:
-            Fplus[3:, 3:] = fhat[..., t]
+            Fplus[2:, 2:] = fhat[..., t]
         else:
             Fplus[0:2, 0:2] = fhat[..., t]
     else:
@@ -139,7 +139,7 @@ def build_Fplus_vectorized(l, fhat, n, end=False):
 
     if l[1] - l[0] == 1:
         if l[0] == 0:
-            Fplus[:, :, 3:, 3:] = fhat[..., t]
+            Fplus[:, :, 2:, 2:] = fhat[..., t]
         else:
             Fplus[:, :, 0:2, 0:2] = fhat[..., t]
     else:

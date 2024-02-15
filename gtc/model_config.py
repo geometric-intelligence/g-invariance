@@ -28,7 +28,7 @@ def insert_after_key(odict, after_key, key, value):
     return temp_odict
 
 
-def model_config(group, pooling, n_filters, group_type="dihedral", out_dim=10):
+def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=10):
     N = 8
     pooling_map = {
         "bsp": gtc_pooling.BspGroupPooling,

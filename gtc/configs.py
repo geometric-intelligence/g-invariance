@@ -58,8 +58,8 @@ def get_dataset_config(group_continuous, dataset, seed):
     return dataset_config
 
 
-def trainer(group_continous, group, pooling, dataset, n_filters=10, seed=42):
-    model = model_config.model_config(group, pooling, n_filters)
+def get_trainer_config(group_continous, group, pooling, dataset, n_filters=10, seed=42):
+    model = model_config.get_model_config(group, pooling, n_filters)
     scheduler_config = Config(
         {
             "type": ReduceLROnPlateau,
