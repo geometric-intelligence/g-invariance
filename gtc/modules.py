@@ -13,7 +13,7 @@ class GonR3ConvBlock(torch.nn.Module):
         bias=False,
         nonlinearity=None,
         in_type=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.n_channels = n_channels
@@ -73,7 +73,7 @@ class GonR2ConvBlock(torch.nn.Module):
         bias=False,
         nonlinearity=None,
         in_type=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.N = N
@@ -129,7 +129,7 @@ class SO2onR2ConvBlock(torch.nn.Module):
         bias=False,
         nonlinearity=nn.ReLU,
         in_type=None,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.N = N

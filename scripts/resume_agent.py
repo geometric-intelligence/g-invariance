@@ -1,7 +1,7 @@
 import argparse
 import subprocess as sp
 
-from torch_tools.config import Config
+from gtc.utils import Config
 from torch_tools.utils import load_checkpoint
 from transform_datasets.utils.wandb import (
     create_dataset,

@@ -6,15 +6,15 @@ test:
 
 .PHONY: autoformat
 autoformat:
-	black gijo
-	isort gijo 
+	black gtc
+	isort gtc 
 
 .PHONY: lint
 lint:
-	$(PYTHON) -m flake8 gijo
-	$(PYTHON) -m black gijo --check
+	$(PYTHON) -m flake8 gtc
+	$(PYTHON) -m black gtc --check
 	# Note that Bandit will look for .bandit file only if it's invoked with -r option.
-	$(PYTHON) -m bandit -c pyproject.toml -r gijo --exit-zero
+	$(PYTHON) -m bandit -c pyproject.toml -r gtc --exit-zero
 	$(PYTHON) -m mypy --install-types --non-interactive
 
 .PHONY: clean
