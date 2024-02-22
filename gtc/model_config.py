@@ -57,10 +57,11 @@ def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=1
                 }
             ),
             "gtot": Config(
-            {
-                "type": gtc_modules.GTtoT,
-                "params": {},
-            }),
+                {
+                    "type": gtc_modules.GTtoT,
+                    "params": {},
+                }
+            ),
             "ravel": Config(
                 {
                     "type": gtc_modules.Ravel,
@@ -94,13 +95,4 @@ def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=1
         }
     )
 
-    # if pooling == "max":
-    #     gtot = Config(
-    #         {
-    #             "type": gtc_modules.GTtoT,
-    #             "params": {},
-    #         }
-    #     )
-    #     insert_after_key(model_config, after_key="gpool", key="gttot", value=gtot)
-    print(model_config)
     return model_config

@@ -8,10 +8,10 @@ import jsonpickle
 import numpy as np
 import pandas as pd
 import torch
+import wandb
 from transform_datasets.dataset import TransformDataset
 
 import gtc
-import wandb
 
 
 def get_default_args(func):
@@ -324,7 +324,8 @@ def run_trainer(  # previously device=0
         num_params = sum(
             param.numel() for param in trainer.model.parameters() if param.requires_grad
         )
-        print(f'Number of parameters: {num_params}')
+        print(f"Number of parameters: {num_params}")
+        print(f"Number of epochs: {epochs}")
 
         trainer.train(data_loader, epochs=epochs)
 
