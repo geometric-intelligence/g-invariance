@@ -319,6 +319,7 @@ def run_trainer(  # previously device=0
         )
 
         epochs = int(n_examples // len(data_loader.train.dataset.data))
+        print(f"device: {device}")
         trainer.model.device = device
         trainer.model = trainer.model.to(device)
         num_params = sum(

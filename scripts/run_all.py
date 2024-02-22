@@ -30,10 +30,8 @@ def run_experiments():
     for group, group_continuous, pooling, dataset, filters in itertools.product(
         groups, groups_continuous, poolings, datasets, n_filters
     ):
-        print(f"running experiment for {group} {group_continuous} {pooling} {dataset} {filters}...")
-        config = configs.get_trainer_config(
-            group_continuous, group, pooling, dataset, filters
-        )
+        print(f"running experiment for: group: {group} contiguous: {group_continuous} pooling: {pooling} dataset: {dataset} filters: {filters}...")
+        config = configs.get_trainer_config(group_continuous, group, pooling, dataset, filters)
         run_trainer(
             logger_config=configs.logger_config,
             master_config=config,
