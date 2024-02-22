@@ -1,16 +1,11 @@
 import einops
 import numpy as np
 import torch
-from escnn.gspaces import *
 from escnn.nn import GeometricTensor
 from escnn.nn.modules.invariantmaps import GroupPooling
 
-from gtc.functional import (
-    build_Fplus_vectorized,
-    clebsch_gordan,
-    first_last_cb,
-    get_cayley_table,
-)
+from gtc.functional import (build_Fplus_vectorized, clebsch_gordan,
+                            first_last_cb, get_cayley_table)
 
 
 class TCGroupPoolingEfficient(GroupPooling):

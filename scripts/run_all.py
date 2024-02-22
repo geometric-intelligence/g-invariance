@@ -1,8 +1,9 @@
 import itertools
-from gtc.utils import create_dataset_run
+import gtc.utils as gtc_utils
 from gtc.utils import run_trainer
 from gtc import configs
 
+DATASETS_PATH = 'datasets/'
 
 def run_experiments():
     n_filters = [
@@ -13,15 +14,8 @@ def run_experiments():
         24,
     ]
     groups_continuous = ["o2", "so2"]
-    groups = [
-        "c8",
-        "d16",
-    ]  # TODO: Complete code for the dn groups. "c32", "c64","d4", "d32"
-    poolings = [
-        "max",
-        "tc",
-        "bsp",
-    ]  # fbsp is full bsp, bsp is partial bsp TODO: Implement "fbsp",
+    groups = ["c8", "d16"]  # TODO: Complete code for the dn groups. "c32", "c64","d4", "d32"
+    poolings = ["max", "tc", "bsp"]  # fbsp is full bsp, bsp is partial bsp TODO: Implement "fbsp",
     datasets = ["mnist"]  # , "emnist"]
 
     # Dataset
@@ -30,11 +24,8 @@ def run_experiments():
         # Is the seed necessary for datasets?
         dataset_config = configs.get_dataset_config(group_continuous, dataset, seed=42)
         # TODO: Make this work with joblib
-        create_dataset_run(
-            dataset_config=dataset_config,
-            data_project="bispectrumnn",
-            entity="johan-atmo",
-        )
+        print(dataset_config)
+        gtc_utils.create_dataset(config=dataset_config, prefix=DATASETS_PATH)
 
     # Train
     for group, group_continuous, pooling, dataset, filters in itertools.product(
@@ -43,13 +34,14 @@ def run_experiments():
         config = configs.get_trainer_config(
             group_continuous, group, pooling, dataset, filters
         )
+        print(config)
         run_trainer(
             logger_config=configs.logger_config,
             master_config=config,
             n_examples=100000000,
             entity="johan-atmo",
             project="bispectrumnn",
-            config=config,  # Nina.
+            prefix=DATASETS_PATH
         )
 
 

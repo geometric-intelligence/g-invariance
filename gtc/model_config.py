@@ -39,7 +39,7 @@ def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=1
         {
             "conv1": Config(
                 {
-                    "type": GonR2ConvBlock,
+                    "type": gtc_modules.GonR2ConvBlock,
                     "params": {
                         "N": N,  # Assuming N is defined elsewhere
                         "action": gspaces.flipRot2dOnR2,  # Assuming gspaces is imported or defined elsewhere

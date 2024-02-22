@@ -1,14 +1,17 @@
 import copy
+import hashlib
 import inspect
 import os
 from collections import OrderedDict
 
+import jsonpickle
 import numpy as np
+import pandas as pd
 import torch
-import wandb
-from transform_datasets.utils.wandb import create_dataset, load_dataset
+from transform_datasets.dataset import TransformDataset
 
 import gtc
+import wandb
 
 
 def get_default_args(func):
@@ -18,6 +21,87 @@ def get_default_args(func):
         for k, v in signature.parameters.items()
         if v.default is not inspect.Parameter.empty
     }
+
+
+def gen_dataset(config):
+    """
+    Generate a TransformDataset from a config dictionary with the following
+    structure:
+
+    config = {
+        "pattern": {"type": obj, "params": {}},
+        "transforms": {
+            "0": {"type": obj, "params": {}},
+            "1": {"type": obj, "params": {}}
+         }
+    }
+
+    The "type" parameter in each dictionary specifies an uninstantiated dataset
+    or transform class. The "params" parameter specifies a dictionary containing
+    the keyword arguments needed to instantiate the class.
+    """
+    if "seed" in config:
+        torch.manual_seed(config["seed"])
+        np.random.seed(config["seed"])
+    # Catch for datasets and transforms that have no parameters
+    if "params" not in config["pattern"]:
+        config["pattern"]["params"] = {}
+    for t in config["transforms"]:
+        if "params" not in config["transforms"][t]:
+            config["transforms"][t]["params"] = {}
+
+    # Instantiate pattern object
+    pattern = config["pattern"]["type"](**config["pattern"]["params"])
+
+    # Instantiate transform objects
+    transforms = [
+        config["transforms"][k]["type"](**config["transforms"][k]["params"])
+        for k in sorted(config["transforms"])
+    ]
+
+    # Generate dataset
+    dataset = TransformDataset(pattern, transforms)
+    return dataset
+
+
+def get_names(config):
+    dataset_type = config["pattern"]["type"].__name__
+    dataset_hash = config_to_hash(config)
+
+    transform_name = "-".join(
+        [config["transforms"][k]["type"].__name__ for k in sorted(config["transforms"])]
+    )
+    dataset_name = dataset_type + "_" + transform_name
+    return dataset_name, dataset_type, dataset_hash
+
+
+def get_dataset_path(config, prefix):
+    filename = hashlib.md5(jsonpickle.encode(config).encode("utf-8")).hexdigest()
+    filename = f"{filename}.pt"
+    return os.path.join(prefix, filename)
+
+
+def create_dataset(config, prefix):
+    if not os.path.exists(prefix):
+        print(f"Creating directory {prefix}")
+        os.makedirs(prefix)
+    path = get_dataset_path(config, prefix)
+    print(f"path={path}")
+    if os.path.exists(path):
+        print(f"Dataset already exists at {path}")
+        return
+    if "seed" in config:
+        torch.manual_seed(config["seed"])
+        np.random.seed(config["seed"])
+    dataset = gen_dataset(config)
+    torch.save(dataset, path)
+    return
+
+
+def load_dataset(config, prefix):
+    path = get_dataset_path(config, prefix)
+    dataset = torch.load(path)
+    return dataset
 
 
 class Config(dict):
@@ -94,11 +178,7 @@ def load_checkpoint(logdir, device="cpu"):
     trainer = checkpoint["trainer"]
     data_loader = Config(trainer.logger.config["data_loader"]).build()
     dataset_config = trainer.logger.config["dataset"]
-    dataset = load_dataset(
-        dataset_config,
-        project=trainer.logger.data_project,
-        entity=trainer.logger.entity,
-    )
+    dataset = load_dataset(dataset_config)
     data_loader.load(dataset)
     if not hasattr(checkpoint, "model"):
         for k, v in trainer.logger.config["model"].items():
@@ -223,19 +303,14 @@ def run_trainer(  # previously device=0
     n_examples=1e9,
     entity=None,
     project=None,
-    config=None,  # Nina.
+    prefix="dataset",
 ):
     flat_config = flatten_dict(master_config)
     with wandb.init(config=flat_config, entity=entity, project=project) as run:
         new_config = fix_wandb_config(wandb.config, master_config)
         # Nina.
-        wandb.log({"experiment_config": config})  # Nina.
 
-        dataset = load_dataset(
-            new_config["dataset"],
-            logger_config["params"]["data_project"],
-            logger_config["params"]["entity"],
-        )
+        dataset = load_dataset(master_config["dataset"], prefix=prefix)
 
         data_loader = new_config["data_loader"].build()
         data_loader.load(dataset)
@@ -254,13 +329,6 @@ def run_trainer(  # previously device=0
         print(num_params)
 
         trainer.train(data_loader, epochs=epochs)
-
-
-def create_dataset_run(dataset_config, data_project, entity):
-    flat_config = flatten_dict(dataset_config)
-    with wandb.init(config=flat_config, project=data_project, entity=entity) as run:
-        new_config = fix_wandb_config(wandb.config, dataset_config)
-        dataset = create_dataset(new_config, data_project, entity, run)
 
 
 def construct_trainer(master_config, logger_config, wandb_config, data_loader):
