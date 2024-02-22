@@ -24,7 +24,6 @@ def run_experiments():
         # Is the seed necessary for datasets?
         dataset_config = configs.get_dataset_config(group_continuous, dataset, seed=42)
         # TODO: Make this work with joblib
-        print(dataset_config)
         gtc_utils.create_dataset(config=dataset_config, prefix=DATASETS_PATH)
 
     # Train
@@ -34,7 +33,6 @@ def run_experiments():
         config = configs.get_trainer_config(
             group_continuous, group, pooling, dataset, filters
         )
-        print(config)
         run_trainer(
             logger_config=configs.logger_config,
             master_config=config,

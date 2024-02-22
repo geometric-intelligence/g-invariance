@@ -314,7 +314,6 @@ def run_trainer(  # previously device=0
 
         data_loader = new_config["data_loader"].build()
         data_loader.load(dataset)
-        # print("MES LABELS==",dataset.labels)
         trainer = construct_trainer(
             master_config, logger_config, new_config, data_loader
         )
@@ -322,11 +321,10 @@ def run_trainer(  # previously device=0
         epochs = int(n_examples // len(data_loader.train.dataset.data))
         trainer.model.device = device
         trainer.model = trainer.model.to(device)
-        # print('mymodel=', trainer.model.device)
         num_params = sum(
             param.numel() for param in trainer.model.parameters() if param.requires_grad
         )
-        print(num_params)
+        print(f'Number of parameters: {num_params}')
 
         trainer.train(data_loader, epochs=epochs)
 
