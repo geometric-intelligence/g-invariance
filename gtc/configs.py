@@ -1,5 +1,4 @@
 import torch
-from configs.data_loader.bs64_val02 import data_loader_config
 from torch import optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from transform_datasets import transforms
@@ -7,7 +6,7 @@ from transform_datasets.patterns.natural import MNIST
 
 from gtc import model_config
 from gtc.trainer import GTrainer
-from gtc.utils import Config, WBLogger
+from gtc.utils import Config, TrainValLoader, WBLogger
 
 logger_config = Config(
     {
@@ -21,6 +20,17 @@ logger_config = Config(
             "plot_interval": 1,
             "end_plotter": None,
             "step_plotter": None,
+        },
+    }
+)
+
+data_loader_config = Config(
+    {
+        "type": TrainValLoader,
+        "params": {
+            "batch_size": 200,
+            "fraction_val": 0.2,
+            "num_workers": 5,
         },
     }
 )

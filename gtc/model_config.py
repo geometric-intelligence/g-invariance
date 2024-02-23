@@ -39,7 +39,7 @@ def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=1
         {
             "conv1": Config(
                 {
-                    "type": GonR2ConvBlock,
+                    "type": gtc_modules.GonR2ConvBlock,
                     "params": {
                         "N": N,  # Assuming N is defined elsewhere
                         "action": gspaces.flipRot2dOnR2,  # Assuming gspaces is imported or defined elsewhere
@@ -54,6 +54,12 @@ def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=1
                 {
                     "type": pooling_map[pooling],
                     "params": {"idx": None, "group_type": group_type},
+                }
+            ),
+            "gtot": Config(
+                {
+                    "type": gtc_modules.GTtoT,
+                    "params": {},
                 }
             ),
             "ravel": Config(
@@ -88,14 +94,5 @@ def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=1
             ),
         }
     )
-
-    if pooling == "max":
-        gtot = Config(
-            {
-                "type": gtc_modules.GTtoT,
-                "params": {},
-            }
-        )
-        insert_after_key(model_config, after_key="gpool", key="gttot", value=gtot)
 
     return model_config

@@ -71,7 +71,7 @@ class GTrainer(Trainer):
             reg_loss = 0
             total_loss = 0
             accuracy = 0
-            if self._is_emnist:
+            if self._is_dataset_emnist:
                 labels -= 1
 
             x = x.to(self.model.device)

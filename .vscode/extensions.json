@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "github.copilot",
+        "github.copilot-chat",
+        "ms-toolsai.jupyter",
+        "ms-python.black-formatter",
+        "esbenp.prettier-vscode",
+        "donjayamanne.githistory",
+        "github.vscode-pull-request-github"
+    ]
+}
