@@ -14,6 +14,8 @@ def run_experiments():
         24,
     ]
     groups_continuous = ["o2", "so2"]
+    # C is discretization of SO2, D is discretization of O2
+    # Test different discretizations
     groups = ["c8", "d16"]  # TODO: Complete code for the dn groups. "c32", "c64","d4", "d32"
     poolings = ["max", "tc", "bsp"]  # fbsp is full bsp, bsp is partial bsp TODO: Implement "fbsp",
     datasets = ["mnist"]  # , "emnist"]

@@ -41,8 +41,8 @@ def get_model_config(group, pooling, n_filters, group_type="dihedral", out_dim=1
                 {
                     "type": gtc_modules.GonR2ConvBlock,
                     "params": {
-                        "N": N,  # Assuming N is defined elsewhere
-                        "action": gspaces.flipRot2dOnR2,  # Assuming gspaces is imported or defined elsewhere
+                        "N": N,
+                        "action": gspaces.flipRot2dOnR2,
                         "n_channels": 4,
                         "kernel_size": 16,
                         "padding": 0,
