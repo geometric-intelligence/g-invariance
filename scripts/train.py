@@ -7,10 +7,11 @@ from filelock import FileLock
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
-from torchvision import transforms
+from torchvision import transforms as torchvision_transforms
 from torchvision import datasets
-
-
+from scripts import model
+from scripts import rich_gi
+from scripts import transforms
 import os
 
 import pydantic
@@ -98,31 +99,37 @@ class MNISTDataModule(pl.LightningDataModule):
         self.data_dir = "./data/"
         self.batch_size = config.batch_size
         # TODO: Add other transforms
-        self.transform = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
+        continuous_group_transform = getattr(transforms, config.continuous_group)(sample_method='random')
+        self.transforms = torchvision_transforms.Compose(
+            [torchvision_transforms.ToTensor(), 
+             torchvision_transforms.Normalize((0.1307,), (0.3081,)),
+             continuous_group_transform, 
+             torchvision_transforms.Resize((16, 16)), 
+             transforms.CircleCrop(), 
+             transforms.AddChannelDim()]
         )
         self.num_workers = config.num_workers
 
     def setup(self, stage=None):
         with FileLock(f"{self.data_dir}.lock"):
-            if config.dataet == "mnist":
+            if config.dataset == "mnist":
                 mnist = datasets.MNIST(
-                    self.data_dir, train=True, download=True, transform=self.transform
+                    self.data_dir, train=True, download=True, transform=self.transforms
                 )
                 self.data_train, self.data_val = random_split(mnist, [55000, 5000])
 
                 self.data_test = datasets.MNIST(
-                    self.data_dir, train=False, download=True, transform=self.transform
+                    self.data_dir, train=False, download=True, transform=self.transforms
                 )
             elif config.dataset == "emnist":
                 mnist = datasets.EMNIST(
-                    self.data_dir, train=True, download=True, transform=self.transform
+                    self.data_dir, train=True, download=True, transform=self.transforms
                 )
                 # TODO: Check size of emnist
                 self.data_train, self.data_val = random_split(mnist, [55000, 5000])
                 raise ValueError("split not ready")
                 self.data_test = datasets.EMNIST(
-                    self.data_dir, train=False, download=True, transform=self.transform
+                    self.data_dir, train=False, download=True, transform=self.transforms
                 )
 
     def train_dataloader(self):
@@ -152,10 +159,10 @@ class MNISTDataModule(pl.LightningDataModule):
 
 if __name__ == "__main__":
     torch.set_float32_matmul_precision("medium")
-    config = gijo_config.read_config_from_file()
+    config = read_config_from_file()
     pl.seed_everything(config.seed)
 
-    dm = MNISTDataModule(batch_size=config.batch_size, num_workers=config.workers)
+    dm = MNISTDataModule(config)
 
     model = MNISTClassifier(config)
 

@@ -1,8 +1,38 @@
 import numpy as np
 import torch
 from skimage.transform import rotate, resize
+import collections
 
+class Transform:
+    def __init__(self):
+        self.name = None
 
+    def define_containers(self, tlabels):
+        transformed_data, transforms, new_labels = [], [], []
+        new_tlabels = collections.OrderedDict({k: [] for k in tlabels.keys()})
+        return transformed_data, new_labels, new_tlabels, transforms
+
+    def reformat(self, transformed_data, new_labels, new_tlabels, transforms):
+        try:
+            transformed_data = torch.stack(transformed_data)
+        except:
+            transformed_data = torch.tensor(np.array(transformed_data))
+        transforms = torch.tensor(transforms)
+        new_labels = torch.stack(new_labels)
+        for k in new_tlabels.keys():
+            new_tlabels[k] = torch.stack(new_tlabels[k])
+        return transformed_data, new_labels, new_tlabels, transforms
+    
+class AddChannelDim(Transform):
+    def __init__(self):
+        super().__init__()
+        self.name = "add-channel-dim"
+
+    def __call__(self, data, labels, tlabels):
+        transformed_data = torch.unsqueeze(data, 1)
+        transforms = torch.zeros(len(data))
+        return transformed_data, labels, tlabels, transforms
+    
 class Transform:
     def __init__(self):
         self.name = None

@@ -18,3 +18,10 @@ batch_size: 32
 gpu_count: 1
 workers: 1
 transform: 'O2'
+num_workers: 8
+N: 8
+pooling: 'tc'
+group_type: 'dihedral'
+out_dim: 10
+dataset: 'mnist'
+continuous_group: 'O2'
