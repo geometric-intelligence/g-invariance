@@ -1,7 +1,9 @@
+import collections
+
 import numpy as np
 import torch
-from skimage.transform import rotate, resize
-import collections
+from skimage.transform import rotate
+
 
 class Transform:
     def __init__(self):
@@ -22,7 +24,8 @@ class Transform:
         for k in new_tlabels.keys():
             new_tlabels[k] = torch.stack(new_tlabels[k])
         return transformed_data, new_labels, new_tlabels, transforms
-    
+
+
 class AddChannelDim(Transform):
     def __init__(self):
         super().__init__()
@@ -32,7 +35,8 @@ class AddChannelDim(Transform):
         transformed_data = torch.unsqueeze(data, 1)
         transforms = torch.zeros(len(data))
         return transformed_data, labels, tlabels, transforms
-    
+
+
 class Transform:
     def __init__(self):
         self.name = None

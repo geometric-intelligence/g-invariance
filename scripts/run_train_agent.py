@@ -1,4 +1,5 @@
 import argparse
+
 from gtc.utils import run_trainer
 
 parser = argparse.ArgumentParser()

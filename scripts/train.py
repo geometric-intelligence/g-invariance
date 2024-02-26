@@ -1,21 +1,20 @@
+import os
+
+import pydantic
 import pytorch_lightning as pl
 import pytorch_lightning.callbacks as pl_callbacks
 import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
+import yaml
 from filelock import FileLock
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
-from torchvision import transforms as torchvision_transforms
 from torchvision import datasets
-from scripts import model
-from scripts import rich_gi
-from scripts import transforms
-import os
+from torchvision import transforms as torchvision_transforms
 
-import pydantic
-import yaml
+from scripts import model, rich_gi, transforms
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 
@@ -99,14 +98,18 @@ class MNISTDataModule(pl.LightningDataModule):
         self.data_dir = "./data/"
         self.batch_size = config.batch_size
         # TODO: Add other transforms
-        continuous_group_transform = getattr(transforms, config.continuous_group)(sample_method='random')
+        continuous_group_transform = getattr(transforms, config.continuous_group)(
+            sample_method="random"
+        )
         self.transforms = torchvision_transforms.Compose(
-            [torchvision_transforms.ToTensor(), 
-             torchvision_transforms.Normalize((0.1307,), (0.3081,)),
-             continuous_group_transform, 
-             torchvision_transforms.Resize((16, 16)), 
-             transforms.CircleCrop(), 
-             transforms.AddChannelDim()]
+            [
+                torchvision_transforms.ToTensor(),
+                torchvision_transforms.Normalize((0.1307,), (0.3081,)),
+                continuous_group_transform,
+                torchvision_transforms.Resize((16, 16)),
+                transforms.CircleCrop(),
+                transforms.AddChannelDim(),
+            ]
         )
         self.num_workers = config.num_workers
 

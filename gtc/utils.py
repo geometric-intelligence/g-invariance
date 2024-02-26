@@ -8,10 +8,10 @@ import jsonpickle
 import numpy as np
 import pandas as pd
 import torch
-import wandb
 from transform_datasets.dataset import TransformDataset
 
 import gtc
+import wandb
 
 
 def get_default_args(func):

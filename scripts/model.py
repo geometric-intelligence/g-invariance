@@ -1,29 +1,11 @@
 """Definition of a neural network for MNIST classification."""
 
 import torch
-import torch.nn.functional as F
+from escnn import gspaces
 from torch import nn
-from transform_datasets import transforms
+
 import gtc.modules as gtc_modules
 import gtc.pooling as gtc_pooling
-from escnn import gspaces
-
-
-class Net(nn.Module):
-    def __init__(self, config):
-        super(Net, self).__init__()
-        blocks = [
-            getattr(transforms, config.continuous_group),
-            transforms.Resize((16, 16)),
-            transforms.CircleCrop(),
-            transforms.AddChannelDim(),
-        ]
-        self.model = torch.nn.Sequential(blocks)
-
-    def forward(self, x):
-        batch_size, channels, width, height = x.size()
-        x = x.view(batch_size, -1)
-        return self.model(x)
 
 
 class Net(nn.Module):
@@ -44,14 +26,22 @@ class Net(nn.Module):
             bias=False,
         )
         self.model = self.model = torch.nn.Sequential(
-                conv_block,
-                pooling_map[config.pooling](idx=None, group_type=config.group_type, in_type=conv_block.out_type),
-                gtc_modules.GTtoT(),
-                gtc_modules.Ravel(),
-                gtc_modules.FullyConnectedBlock(in_dim=config.out_dim, out_dim=config.out_dim),
-                gtc_modules.FullyConnectedBlock(in_dim=config.out_dim, out_dim=config.out_dim),
-                gtc_modules.FullyConnectedBlock(in_dim=config.out_dim, out_dim=config.out_dim),
-                gtc_modules.Linear(in_dim=config.out_dim, out_dim=config.out_dim),
+            conv_block,
+            pooling_map[config.pooling](
+                idx=None, group_type=config.group_type, in_type=conv_block.out_type
+            ),
+            gtc_modules.GTtoT(),
+            gtc_modules.Ravel(),
+            gtc_modules.FullyConnectedBlock(
+                in_dim=config.out_dim, out_dim=config.out_dim
+            ),
+            gtc_modules.FullyConnectedBlock(
+                in_dim=config.out_dim, out_dim=config.out_dim
+            ),
+            gtc_modules.FullyConnectedBlock(
+                in_dim=config.out_dim, out_dim=config.out_dim
+            ),
+            gtc_modules.Linear(in_dim=config.out_dim, out_dim=config.out_dim),
         )
 
     def forward(self, x):
