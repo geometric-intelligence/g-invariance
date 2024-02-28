@@ -1,11 +1,10 @@
 import os
 import os.path
 from typing import Any, Callable, Dict, List, Optional, Tuple
-from skimage.transform import rotate, resize
 
 import numpy as np
-
 from PIL import Image
+from skimage.transform import resize, rotate
 from torchvision import datasets
 
 

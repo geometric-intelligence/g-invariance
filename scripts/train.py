@@ -11,11 +11,10 @@ from filelock import FileLock
 from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
-
 from torchvision import transforms as torchvision_transforms
 
-from scripts import model, rich_gi, dataset
 import scripts.transforms as gtc_transforms
+from scripts import dataset, model, rich_gi
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 

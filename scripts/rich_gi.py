@@ -1,6 +1,5 @@
 from pytorch_lightning.callbacks import RichProgressBar
-from pytorch_lightning.callbacks.progress.rich_progress import \
-    RichProgressBarTheme
+from pytorch_lightning.callbacks.progress.rich_progress import RichProgressBarTheme
 
 
 def progress_bar():
