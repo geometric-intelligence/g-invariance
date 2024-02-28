@@ -48,5 +48,4 @@ class Net(nn.Module):
         )
 
     def forward(self, x):
-        x = x[:, 0, 0:1, :, :]
         return self.model(x)

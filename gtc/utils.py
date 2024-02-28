@@ -246,7 +246,7 @@ def run_trainer(  # previously device=0
         new_config = fix_wandb_config(wandb.config, master_config)
 
         dataset = load_dataset(master_config["dataset"], prefix=prefix)
-        print(dataset)
+
         data_loader = new_config["data_loader"].build()
         data_loader.load(dataset)
         trainer = construct_trainer(

@@ -74,6 +74,7 @@ class GTrainer(Trainer):
             if self._is_dataset_emnist:
                 labels -= 1
             print(self.model.device)
+            print(self.model.device)
             x = x.to(self.model.device)
             labels = labels.to(self.model.device)
 

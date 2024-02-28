@@ -4,8 +4,12 @@ import torch
 from escnn.nn import GeometricTensor
 from escnn.nn.modules.invariantmaps import GroupPooling
 
-from gtc.functional import (build_Fplus_vectorized, clebsch_gordan,
-                            first_last_cb, get_cayley_table)
+from gtc.functional import (
+    build_Fplus_vectorized,
+    clebsch_gordan,
+    first_last_cb,
+    get_cayley_table,
+)
 
 
 class TCGroupPoolingEfficient(GroupPooling):
@@ -154,9 +158,10 @@ class TCGroupPooling(GroupPooling):
 
             if self.group_type == "cyclic":
                 output = self.triple_correlation_vectorized_batch_cyclic(fm.squeeze())
-
             elif self.group_type == "dihedral":
                 output = self.triple_correlation_vectorized_batch_dihedral(fm.squeeze())
+            else:
+                raise ValueError("group_type should be 'cyclic' or 'dihedral'")
 
             if self.idx is None:
                 idx = torch.triu_indices(output.shape[2], output.shape[3])
@@ -166,6 +171,7 @@ class TCGroupPooling(GroupPooling):
             output = output[:, :, idx[0], idx[1]]
             a, b, c = output.shape
             output = output.reshape((a * b, c))
+            # TODO: Define epsilon somewhere
             output = output / (output.norm(dim=0, keepdim=True) + 1e-5)
             output = output.reshape((a, b, c, 1, 1))
             # print(b*c)

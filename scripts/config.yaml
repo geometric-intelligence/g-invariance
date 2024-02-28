@@ -24,3 +24,4 @@ group_type: 'dihedral'
 out_dim: 544
 dataset: 'mnist'
 continuous_group: 'O2'
+augmentation_factor: 2
