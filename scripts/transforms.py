@@ -3,6 +3,8 @@ import collections
 import numpy as np
 import torch
 from skimage.transform import rotate
+import torchvision.transforms.v2 as vt
+import math
 
 
 class Transform:
@@ -43,7 +45,7 @@ class Transform:
 
     def define_containers(self, tlabels):
         transformed_data, transforms, new_labels = [], [], []
-        new_tlabels = OrderedDict({k: [] for k in tlabels.keys()})
+        new_tlabels = collections.OrderedDict({k: [] for k in tlabels.keys()})
         return transformed_data, new_labels, new_tlabels, transforms
 
     def reformat(self, transformed_data, new_labels, new_tlabels, transforms):
@@ -52,7 +54,6 @@ class Transform:
         except:
             transformed_data = torch.tensor(np.array(transformed_data))
         transforms = torch.tensor(transforms)
-        # new_labels = torch.tensor(new_labels)
         new_labels = torch.stack(new_labels)
         for k in new_tlabels.keys():
             new_tlabels[k] = torch.stack(new_tlabels[k])
@@ -134,7 +135,7 @@ class O2(Transform):
                 else:
                     x_flip = x
                 # TODO: use https://pytorch.org/vision/stable/generated/torchvision.transforms.functional.rotate.html?
-                xt = rotate(x_flip, rotations[j])
+                xt = rotate(x_flip, rotations[j], interpolation="bilinear")
                 transformed_data.append(xt)
                 transforms.append((flips[j], rotations[j]))
                 new_labels.append(labels[i])
@@ -147,7 +148,23 @@ class O2(Transform):
         return transformed_data, new_labels, new_tlabels, transforms
 
 
-class SO2(Transform):
+def resize_image(img, target_size):
+    _, size, _ = img.shape
+
+    pad_size = max(target_size - size, 0)
+
+    pad_top = pad_size // 2
+    pad_bottom = pad_size - pad_top
+    padded_tensor = vt.functional.pad(
+        img,
+        padding=(pad_top, pad_bottom, pad_bottom, pad_top),
+        fill=0,
+        padding_mode="constant",
+    )
+    return padded_tensor
+
+
+class SO2(torch.nn.Module):
     def __init__(self, n=1, sample_method="linspace"):
         super().__init__()
         assert sample_method in [
@@ -157,37 +174,33 @@ class SO2(Transform):
         self.n = n
         self.sample_method = sample_method
         self.name = "so2"
+        self.sqrt2 = math.sqrt(2)
 
     def get_samples(self):
         rot = 360 / self.n
         if self.sample_method == "linspace":
-            rotations = np.array([rot * i for i in range(self.n)])
+            rotations = [rot * i for i in range(self.n)]
         else:
+            # TODO: Remove numpy deps
             rotations = np.random.choice(np.arange(360), size=self.n, replace=False)
         return rotations
 
-    def __call__(self, data, labels, tlabels):
-        assert (
-            len(data.shape) == 3
-        ), "Data must have shape (n_datapoints, img_size[0], img_size[1])"
+    def forward(self, x):
+        N = x.shape[0]
+        target_size = math.ceil(self.sqrt2 * x.shape[-1]) + 1
+        processed_images = []
+        for i in range(N):
+            angles = self.get_samples()
+            rotated_images = [
+                vt.functional.rotate(x[i : i + 1], angle, expand=True)
+                for angle in angles
+            ]
+            resized_images = [
+                resize_image(rotated_images[i], target_size=target_size)
+                for i in range(self.n)
+            ]
+            concatenated_image = torch.stack(resized_images, dim=0)
+            processed_images.append(concatenated_image)
 
-        transformed_data, new_labels, new_tlabels, transforms = self.define_containers(
-            tlabels
-        )
-
-        select_transforms = self.get_samples()
-        for i, x in enumerate(data):
-            if self.sample_method == "random":
-                select_transforms = self.get_samples()
-            for t in select_transforms:
-                xt = rotate(x, t)
-                transformed_data.append(xt)
-                transforms.append(t)
-                new_labels.append(labels[i])
-                for k in new_tlabels.keys():
-                    new_tlabels[k].append(tlabels[k][i])
-
-        transformed_data, new_labels, new_tlabels, transforms = self.reformat(
-            transformed_data, new_labels, new_tlabels, transforms
-        )
-        return transformed_data, new_labels, new_tlabels, transforms
+        x = torch.cat(processed_images, dim=0)
+        return x

@@ -9,16 +9,19 @@ import gtc.pooling as gtc_pooling
 
 
 class Net(nn.Module):
+    POOLING_MAP = {
+        "bsp": gtc_pooling.BspGroupPooling,
+        "tc": gtc_pooling.TCGroupPooling,
+        "max": gtc_pooling.GroupPooling,
+    }
+
     def __init__(self, config):
         super(Net, self).__init__()
 
-        pooling_map = {
-            "bsp": gtc_pooling.BspGroupPooling,
-            "tc": gtc_pooling.TCGroupPooling,
-            "max": gtc_pooling.GroupPooling,
-        }
+        # Do we even need an external module here?
         conv_block = gtc_modules.GonR2ConvBlock(
             N=config.N,
+            # Should this match SO2/O2? i.e no flip?
             action=gspaces.flipRot2dOnR2,
             n_channels=4,
             kernel_size=16,
@@ -27,7 +30,7 @@ class Net(nn.Module):
         )
         self.model = self.model = torch.nn.Sequential(
             conv_block,
-            pooling_map[config.pooling](
+            self.POOLING_MAP[config.pooling](
                 idx=None, group_type=config.group_type, in_type=conv_block.out_type
             ),
             gtc_modules.GTtoT(),
@@ -41,10 +44,9 @@ class Net(nn.Module):
             gtc_modules.FullyConnectedBlock(
                 in_dim=config.out_dim, out_dim=config.out_dim
             ),
-            gtc_modules.Linear(in_dim=config.out_dim, out_dim=config.out_dim),
+            gtc_modules.Linear(in_dim=config.out_dim, out_dim=10),
         )
 
     def forward(self, x):
-        batch_size, channels, width, height = x.size()
-        x = x.view(batch_size, -1)
+        x = x[:, 0, 0:1, :, :]
         return self.model(x)

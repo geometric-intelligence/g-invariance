@@ -6,7 +6,6 @@ lr: 0.001
 use_progress_bar: false
 checkpoint_dir: "checkpoints/"
 checkpoint_name_pattern: 'mnist-{epoch:03d}'
-checkpoint_name_pattern: "ckpt"
 pin_memory: true
 log_every_n_steps: 10
 max_epochs: 5
@@ -22,6 +21,6 @@ num_workers: 8
 N: 8
 pooling: 'tc'
 group_type: 'dihedral'
-out_dim: 10
+out_dim: 544
 dataset: 'mnist'
 continuous_group: 'O2'

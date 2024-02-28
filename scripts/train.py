@@ -14,7 +14,8 @@ from torchmetrics import Accuracy
 from torchvision import datasets
 from torchvision import transforms as torchvision_transforms
 
-from scripts import model, rich_gi, transforms
+from scripts import model, rich_gi
+import scripts.transforms as gtc_transforms
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 
@@ -97,18 +98,12 @@ class MNISTDataModule(pl.LightningDataModule):
         super().__init__()
         self.data_dir = "./data/"
         self.batch_size = config.batch_size
-        # TODO: Add other transforms
-        continuous_group_transform = getattr(transforms, config.continuous_group)(
-            sample_method="random"
-        )
         self.transforms = torchvision_transforms.Compose(
             [
                 torchvision_transforms.ToTensor(),
+                gtc_transforms.SO2(n=config.N, sample_method="random"),
+                torchvision_transforms.Resize((16,)),
                 torchvision_transforms.Normalize((0.1307,), (0.3081,)),
-                continuous_group_transform,
-                torchvision_transforms.Resize((16, 16)),
-                transforms.CircleCrop(),
-                transforms.AddChannelDim(),
             ]
         )
         self.num_workers = config.num_workers
