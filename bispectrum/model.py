@@ -1,11 +1,13 @@
-"""Definition of a neural network for MNIST classification."""
+"""Definition of a neural network for MNIST classification with 
+   various pooling approaches.
+"""
 
 import torch
 from escnn import gspaces
 from torch import nn
 
-import gtc.modules as gtc_modules
-import gtc.pooling as gtc_pooling
+import bispectrum.modules as gtc_modules
+import bispectrum.pooling as gtc_pooling
 
 
 class Net(nn.Module):

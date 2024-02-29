@@ -8,13 +8,11 @@ import torch
 import torch.nn.functional as F
 import yaml
 from filelock import FileLock
-from torch.nn import functional as F
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
 
-import scripts.transforms as gtc_transforms
-from scripts import dataset, model, rich_gi
+from bispectrum import dataset, model, rich_gi
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 
@@ -142,6 +140,8 @@ class MNISTDataModule(pl.LightningDataModule):
             self.data_train,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            # Careful here, some incompatibilities have been noticed
+            # with pin_memory=True
             pin_memory=False,
         )
 
