@@ -139,6 +139,8 @@ class MNISTDataModule(pl.LightningDataModule):
             self.data_train,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            # Careful here, some incompatibilities have been noticed
+            # with pin_memory=True
             pin_memory=False,
         )
 
