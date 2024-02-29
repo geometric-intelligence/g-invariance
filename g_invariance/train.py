@@ -7,12 +7,11 @@ import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
 import yaml
+from bispectrum import dataset, model, rich_gi
 from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
-
-from bispectrum import dataset, model, rich_gi
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 
