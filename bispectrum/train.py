@@ -11,7 +11,7 @@ from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
-from scripts import dataset, model, rich_gi
+from bispectrum import dataset, model, rich_gi
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 
