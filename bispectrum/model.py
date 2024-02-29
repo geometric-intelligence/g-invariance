@@ -1,4 +1,6 @@
-"""Definition of a neural network for MNIST classification."""
+"""Definition of a neural network for MNIST classification with 
+   various pooling approaches.
+"""
 
 import torch
 from escnn import gspaces
