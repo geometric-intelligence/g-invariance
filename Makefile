@@ -6,15 +6,15 @@ test:
 
 .PHONY: autoformat
 autoformat:
-	black gtc
-	isort gtc 
+	black bispectrum
+	isort bispectrum 
 
 .PHONY: lint
 lint:
-	$(PYTHON) -m flake8 gtc
-	$(PYTHON) -m black gtc --check
+	$(PYTHON) -m flake8 bispectrum
+	$(PYTHON) -m black bispectrum --check
 	# Note that Bandit will look for .bandit file only if it's invoked with -r option.
-	$(PYTHON) -m bandit -c pyproject.toml -r gtc --exit-zero
+	$(PYTHON) -m bandit -c pyproject.toml -r bispectrum --exit-zero
 	$(PYTHON) -m mypy --install-types --non-interactive
 
 .PHONY: clean
