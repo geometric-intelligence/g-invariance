@@ -2,6 +2,7 @@ name: 'mnist'
 seed: 42
 layer_1_size: 128
 layer_2_size: 256
+layer_3_size: 256
 lr: 0.001
 checkpoint_dir: "checkpoints/"
 checkpoint_name_pattern: 'mnist-{epoch:03d}'
@@ -23,3 +24,4 @@ out_dim: 544
 dataset: 'mnist'
 continuous_group: 'O2'
 augmentation_factor: 2
+dataset_dir: '/tmp/datasets/'

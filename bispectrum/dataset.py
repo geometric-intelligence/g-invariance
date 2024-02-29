@@ -32,7 +32,7 @@ class AugmentedMNIST(datasets.VisionDataset):
         filename_suffix = f"{group}_{n_samples}_{sampling_method}_{train_str}.npy"
         self._data_path = os.path.join(root, f"mnist_data_{filename_suffix}")
         self._target_path = os.path.join(root, f"mnist_labels_{filename_suffix}")
-
+        self.group = group
         if os.path.exists(self._data_path) and os.path.exists(self._target_path):
             self.data = np.load(self._data_path)
             self.targets = np.load(self._target_path)
