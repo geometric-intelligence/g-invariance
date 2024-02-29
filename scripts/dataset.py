@@ -54,6 +54,9 @@ class AugmentedMNIST(datasets.VisionDataset):
                 self.resize_image(img, target_size=target_size)
                 for img in rotated_images
             ]
+            if self.group == "so2":
+                # TODO: Implement flips
+                raise NotImplementedError("Flips not implemented for O2")
             for x in resized_images:
                 data.append(x)
                 targets.append(label)

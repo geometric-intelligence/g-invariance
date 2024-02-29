@@ -142,7 +142,7 @@ class MNISTDataModule(pl.LightningDataModule):
             self.data_train,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=False,
         )
 
     def val_dataloader(self):
@@ -150,7 +150,7 @@ class MNISTDataModule(pl.LightningDataModule):
             self.data_val,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=False,
         )
 
     def test_dataloader(self):
@@ -158,7 +158,7 @@ class MNISTDataModule(pl.LightningDataModule):
             self.data_test,
             batch_size=self.batch_size,
             num_workers=self.num_workers,
-            pin_memory=True,
+            pin_memory=False,
         )
 
 
