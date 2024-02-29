@@ -1,9 +1,11 @@
 import itertools
-import gtc.utils as gtc_utils
-from gtc.utils import run_trainer
-from gtc import configs
 
-DATASETS_PATH = 'datasets/'
+import gtc.utils as gtc_utils
+from gtc import configs
+from gtc.utils import run_trainer
+
+DATASETS_PATH = "datasets/"
+
 
 def run_experiments():
     n_filters = [
@@ -14,8 +16,17 @@ def run_experiments():
         24,
     ]
     groups_continuous = ["o2", "so2"]
-    groups = ["c8", "d16"]  # TODO: Complete code for the dn groups. "c32", "c64","d4", "d32"
-    poolings = ["max", "tc", "bsp"]  # fbsp is full bsp, bsp is partial bsp TODO: Implement "fbsp",
+    # C is discretization of SO2, D is discretization of O2
+    # Test different discretizations
+    groups = [
+        "c8",
+        "d16",
+    ]  # TODO: Complete code for the dn groups. "c32", "c64","d4", "d32"
+    poolings = [
+        "max",
+        "tc",
+        "bsp",
+    ]  # fbsp is full bsp, bsp is partial bsp TODO: Implement "fbsp",
     datasets = ["mnist"]  # , "emnist"]
 
     # Dataset
@@ -30,15 +41,19 @@ def run_experiments():
     for group, group_continuous, pooling, dataset, filters in itertools.product(
         groups, groups_continuous, poolings, datasets, n_filters
     ):
-        print(f"running experiment for: group: {group} contiguous: {group_continuous} pooling: {pooling} dataset: {dataset} filters: {filters}...")
-        config = configs.get_trainer_config(group_continuous, group, pooling, dataset, filters)
+        print(
+            f"running experiment for: group: {group} contiguous: {group_continuous} pooling: {pooling} dataset: {dataset} filters: {filters}..."
+        )
+        config = configs.get_trainer_config(
+            group_continuous, group, pooling, dataset, filters
+        )
         run_trainer(
             logger_config=configs.logger_config,
             master_config=config,
             n_examples=100000,
             entity="johan-atmo",
             project="bispectrumnn",
-            prefix=DATASETS_PATH
+            prefix=DATASETS_PATH,
         )
 
 

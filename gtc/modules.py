@@ -48,13 +48,9 @@ class GonR3ConvBlock(torch.nn.Module):
         sequence = [conv, batch_norm]
 
         if nonlinearity is not None:
-            nonlinear_layer = nonlinearity(out_type, inplace=True)
-            self.block = nn.SequentialModule(conv, batch_norm, nonlinear_layer)
-        else:
-            self.block = nn.SequentialModule(
-                conv,
-                batch_norm,
-            )
+            sequence += [nonlinearity(out_type, inplace=True)]
+
+        self.block = nn.SequentialModule(*sequence)
 
     def forward(self, x):
         if type(x) != nn.GeometricTensor:
@@ -102,8 +98,6 @@ class GonR2ConvBlock(torch.nn.Module):
 
         batch_norm = nn.InnerBatchNorm(out_type)
 
-        sequence = [conv, batch_norm]
-
         if nonlinearity is not None:
             nonlinear_layer = nonlinearity(out_type, inplace=True)
             self.block = nn.SequentialModule(conv, batch_norm, nonlinear_layer)
@@ -138,10 +132,10 @@ class SO2onR2ConvBlock(torch.nn.Module):
         self.padding = padding
         self.bias = bias
         self.g_act = gspaces.rot2dOnR2(N=N)
-        if in_type is None:
-            self.in_type = in_type = nn.FieldType(self.g_act, [self.g_act.trivial_repr])
-        else:
-            self.in_type = in_type
+        self.in_type = in_type
+        if self.in_type is None:
+            self.in_type = nn.FieldType(self.g_act, [self.g_act.trivial_repr])
+
         self.out_type = out_type = nn.FieldType(
             self.g_act, n_channels * [self.g_act.regular_repr]
         )
@@ -177,17 +171,6 @@ class FullyConnectedBlock(torch.nn.Module):
 
     def forward(self, x):
         return self.block(x)
-
-
-class BatchNorm1D(torch.nn.Module):
-    def __init__(self, in_dim, **kwargs):
-        super().__init__()
-        self.in_dim = in_dim
-        self.out_type = torch.Tensor
-        self.batch_norm = torch.nn.BatchNorm1d(in_dim)
-
-    def forward(self, x):
-        return self.batch_norm(x)
 
 
 class Linear(torch.nn.Module):

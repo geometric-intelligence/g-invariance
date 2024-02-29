@@ -8,10 +8,10 @@ import jsonpickle
 import numpy as np
 import pandas as pd
 import torch
-import wandb
 from transform_datasets.dataset import TransformDataset
 
 import gtc
+import wandb
 
 
 def get_default_args(func):
@@ -132,21 +132,6 @@ class Config(dict):
         return self["type"](**self["params"])
 
 
-def load_checkpoint(logdir: str):
-    checkpoint = torch.load(logdir)
-    if not hasattr(checkpoint, "model"):
-        trainer = checkpoint["trainer"]
-        model_config = Config(trainer.logger.config["model"])
-        optimizer_config = Config(copy.deepcopy(trainer.logger.config["optimizer"]))
-        trainer.model = model_config.build()
-        trainer.model.load_state_dict(checkpoint["model_state_dict"])
-        optimizer_config["params"]["params"] = trainer.model.parameters()
-        trainer.optimizer = optimizer_config.build()
-        trainer.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-        checkpoint = trainer
-    return checkpoint
-
-
 def create_model(block_configs, data_loader):
     blocks = OrderedDict()
     i = 0
@@ -169,55 +154,6 @@ def create_model(block_configs, data_loader):
         i += 1
     model = torch.nn.Sequential(blocks)
     return model
-
-
-def load_checkpoint(logdir, device="cpu"):
-    from gtc.utils import Config
-
-    checkpoint = torch.load(logdir, map_location=device)
-    trainer = checkpoint["trainer"]
-    data_loader = Config(trainer.logger.config["data_loader"]).build()
-    dataset_config = trainer.logger.config["dataset"]
-    dataset = load_dataset(dataset_config)
-    data_loader.load(dataset)
-    if not hasattr(checkpoint, "model"):
-        for k, v in trainer.logger.config["model"].items():
-            trainer.logger.config["model"][k] = Config(v)
-        model = create_model(trainer.logger.config["model"], data_loader)
-        trainer.model = model
-        trainer.model.load_state_dict(checkpoint["model_state_dict"], strict=False)
-
-    optimizer_config = Config(copy.deepcopy(trainer.logger.config["optimizer"]))
-    optimizer_config["params"]["params"] = trainer.model.parameters()
-    trainer.optimizer = optimizer_config.build()
-    trainer.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
-    return checkpoint, trainer, data_loader
-
-
-def load_wandb_checkpoint(entity, project, run_id, epoch=None):
-    if epoch is None:
-        api = wandb.Api()
-        run = api.run("{}/{}/{}".format(entity, project, run_id))
-        epoch = run.summary.epoch
-        loaded = False
-        while not loaded:
-            if epoch < 0:
-                raise Exception("No saved checkpoints.")
-            try:
-                checkpoint_path = wandb.restore(
-                    "checkpoints/checkpoint_{}.pt".format(epoch),
-                    run_path="{}/{}/{}".format(entity, project, run_id),
-                ).name
-                loaded = True
-            except:
-                epoch -= 1
-    else:
-        checkpoint_path = wandb.restore(
-            "checkpoints/checkpoint_{}.pt".format(epoch),
-            run_path="{}/{}/{}".format(entity, project, run_id),
-        ).name
-    checkpoint, trainer, data_loader = load_checkpoint(checkpoint_path)
-    return checkpoint, trainer, data_loader
 
 
 def nest_dict(dict1):
@@ -306,9 +242,8 @@ def run_trainer(  # previously device=0
     prefix="dataset",
 ):
     flat_config = flatten_dict(master_config)
-    with wandb.init(config=flat_config, entity=entity, project=project) as run:
+    with wandb.init(config=flat_config, entity=entity, project=project):
         new_config = fix_wandb_config(wandb.config, master_config)
-        # Nina.
 
         dataset = load_dataset(master_config["dataset"], prefix=prefix)
 

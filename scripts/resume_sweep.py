@@ -1,10 +1,10 @@
 import argparse
 
-from gtc.utils import Config
 from torch_tools.utils import load_checkpoint
 from transform_datasets.utils.wandb import load_or_create_dataset
 
 import wandb
+from gtc.utils import Config
 
 parser = argparse.ArgumentParser()
 
