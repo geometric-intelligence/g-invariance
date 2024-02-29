@@ -25,6 +25,10 @@ class Config(pydantic.BaseModel):
     def __getitem__(self, item):
         return getattr(self, item)
 
+    def update(self, new_config):
+        for k, v in new_config.items():
+            setattr(self, k, v)
+
 
 def read_config_from_file(path: str = CONFIG_FILE) -> Config:
     if not os.path.exists(path):
@@ -94,7 +98,6 @@ class MNISTDataModule(pl.LightningDataModule):
     def __init__(self, config):
         super().__init__()
         self.config = config
-        self.data_dir = "./data/"
         self.batch_size = config.batch_size
         self.transforms = torchvision_transforms.Compose(
             [
@@ -107,10 +110,11 @@ class MNISTDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
         if stage == "fit":
-            with FileLock(f"{self.data_dir}.lock"):
+            with FileLock(f"{self.config.dataset_dir}.lock"):
                 if self.config.dataset == "mnist":
+                    # TODO: Train/Val datasets need splits with disjoint sets of angles.
                     mnist = dataset.AugmentedMNIST(
-                        self.data_dir,
+                        self.config.dataset_dir,
                         train=True,
                         group="o2",
                         transform=self.transforms,
@@ -125,7 +129,7 @@ class MNISTDataModule(pl.LightningDataModule):
                     )
 
                     self.data_test = dataset.AugmentedMNIST(
-                        self.data_dir,
+                        self.config.dataset_dir,
                         train=False,
                         group="o2",
                         transform=self.transforms,
