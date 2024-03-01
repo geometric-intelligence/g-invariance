@@ -102,6 +102,7 @@ class MNISTDataModule(pl.LightningDataModule):
         self.transforms = torchvision_transforms.Compose(
             [
                 torchvision_transforms.ToTensor(),
+                # TODO: Some issues when size changes. Understand why.
                 torchvision_transforms.Resize((16,)),
                 torchvision_transforms.Normalize((0.1307,), (0.3081,)),
             ]
@@ -136,7 +137,7 @@ class MNISTDataModule(pl.LightningDataModule):
                         n_samples=self.config.augmentation_factor,
                     )
                 elif config.dataset == "emnist":
-                    # TODO
+                    # TODO: Implement emnist dataset
                     pass
 
     def train_dataloader(self):

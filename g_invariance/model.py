@@ -6,15 +6,17 @@ import torch
 from escnn import gspaces
 from torch import nn
 
-import bispectrum.modules as gtc_modules
-import bispectrum.pooling as gtc_pooling
+import g_invariance.modules as gtc_modules
+import g_invariance.pooling as gtc_pooling
 
 
 class Net(nn.Module):
+    # TODO: Currently the output size is hardcoded, should be
+    # computed from the input size, conv and the pooling layer
     POOLING_MAP = {
-        "bsp": gtc_pooling.BspGroupPooling,
-        "tc": gtc_pooling.TCGroupPooling,
-        "max": gtc_pooling.GroupPooling,
+        "bsp": (gtc_pooling.BspGroupPooling, 212),
+        "tc": (gtc_pooling.TCGroupPooling, 544),
+        "max": (gtc_pooling.GroupPooling, 4),
     }
 
     def __init__(self, config):
@@ -30,15 +32,17 @@ class Net(nn.Module):
             padding=0,
             bias=False,
         )
+        # TODO: Should be computed directly from the conv_block
+
         self.model = self.model = torch.nn.Sequential(
             conv_block,
-            self.POOLING_MAP[config.pooling](
+            self.POOLING_MAP[config.pooling][0](
                 idx=None, group_type=config.group_type, in_type=conv_block.out_type
             ),
             gtc_modules.GTtoT(),
             gtc_modules.Ravel(),
             gtc_modules.FullyConnectedBlock(
-                in_dim=config.out_dim, out_dim=config.out_dim
+                in_dim=self.POOLING_MAP[config.pooling][1], out_dim=config.out_dim
             ),
             gtc_modules.FullyConnectedBlock(
                 in_dim=config.out_dim, out_dim=config.out_dim

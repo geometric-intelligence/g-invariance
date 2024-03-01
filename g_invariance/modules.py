@@ -201,4 +201,5 @@ class Ravel(torch.nn.Module):
         self.out_type = torch.Tensor
 
     def forward(self, x):
-        return x.reshape(x.shape[0], -1)
+        x = x.reshape(x.shape[0], -1)
+        return x

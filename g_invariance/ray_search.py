@@ -8,7 +8,6 @@ Example:
     results = tune_mnist_asha(num_samples=100)
 """
 
-import bispectrum.train as bispectrum_train
 import pytorch_lightning as pl
 from ray import tune
 from ray.air.integrations.wandb import WandbLoggerCallback, setup_wandb
@@ -16,6 +15,8 @@ from ray.train import CheckpointConfig, RunConfig, ScalingConfig
 from ray.train import lightning as ray_lightning
 from ray.train.torch import TorchTrainer
 from ray.tune.schedulers import ASHAScheduler
+
+import g_invariance.train as g_invariance_train
 
 
 def train_func(config):
@@ -28,12 +29,12 @@ def train_func(config):
     Returns:
         None
     """
-    config_param = bispectrum_train.read_config_from_file()
+    config_param = g_invariance_train.read_config_from_file()
     setup_wandb(config)
     config_param.update(config)
     print(config_param)
-    dm = bispectrum_train.MNISTDataModule(config_param)
-    model = bispectrum_train.MNISTClassifier(config_param)
+    dm = g_invariance_train.MNISTDataModule(config_param)
+    model = g_invariance_train.MNISTClassifier(config_param)
 
     trainer = pl.Trainer(
         devices="auto",
@@ -63,7 +64,7 @@ def tune_mnist_asha(num_samples=10):
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project="bispectrum_mnist")],
+        callbacks=[WandbLoggerCallback(project="g_invariance_mnist")],
         checkpoint_config=CheckpointConfig(
             num_to_keep=2,
             checkpoint_score_attribute="ptl/val_accuracy",
