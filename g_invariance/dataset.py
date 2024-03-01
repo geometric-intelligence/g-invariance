@@ -8,8 +8,8 @@ from skimage.transform import resize, rotate
 from torchvision import datasets
 
 
-class AugmentedMNIST(datasets.VisionDataset):
-    """Augmented mnist"""
+class AugmentedDataset(datasets.VisionDataset):
+    """Augmented dataset"""
 
     MNIST_SIZE = 28
 
@@ -20,6 +20,7 @@ class AugmentedMNIST(datasets.VisionDataset):
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         sampling_method: str = "random",
+        dataset_name="MNIST",
         group: str = "so2",
         n_samples: int = 2,
     ) -> None:
@@ -28,17 +29,17 @@ class AugmentedMNIST(datasets.VisionDataset):
         if sampling_method not in ["linspace", "random"]:
             raise ValueError("sampling_method must be one of ['linspace', 'random']")
         self.sampling_method = sampling_method
-        train_str = "train" if train else "t10k"
+        train_str = "train" if train else "val"
         filename_suffix = f"{group}_{n_samples}_{sampling_method}_{train_str}.npy"
-        self._data_path = os.path.join(root, f"mnist_data_{filename_suffix}")
-        self._target_path = os.path.join(root, f"mnist_labels_{filename_suffix}")
+        self._data_path = os.path.join(root, f"{dataset_name}_data_{filename_suffix}")
+        self._target_path = os.path.join(root, f"{dataset_name}_labels_{filename_suffix}")
         self.group = group
         if os.path.exists(self._data_path) and os.path.exists(self._target_path):
             self.data = np.load(self._data_path)
             self.targets = np.load(self._target_path)
             return
 
-        mnist = datasets.MNIST(root, train=train, download=True)
+        ds = getattr(datasets, dataset_name)(root, train=train, download=True)
 
         data = []
         targets = []
@@ -46,8 +47,9 @@ class AugmentedMNIST(datasets.VisionDataset):
 
         target_size = int(np.ceil(np.sqrt(2) * self.MNIST_SIZE) + 1)
         # TODO: joblib parallelize this
-        for img, label in mnist:
+        for img, label in ds:
             x = np.array(img)
+            print(x.shape)
             rotations = self.get_samples()
             rotated_images = [rotate(x, t, resize=True) for t in rotations]
             resized_images = [

@@ -18,7 +18,7 @@ N: 8
 pooling: 'bsp'
 group_type: 'dihedral'
 out_dim: 10
-dataset: 'mnist'
+dataset_name: 'EMNIST' # Any dataset from https://pytorch.org/vision/stable/datasets.html
 continuous_group: 'O2'
 augmentation_factor: 2
 dataset_dir: '/tmp/datasets/'

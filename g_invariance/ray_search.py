@@ -79,9 +79,9 @@ def tune_mnist_asha(num_samples=10):
         run_config=run_config,
     )
     search_space = {
-        "pooling": tune.grid_search(["tc"]),  # "bsp", "tc", "max"]),
+        "pooling": tune.grid_search(["bsp", "tc", "max"]),
         "dataset": tune.grid_search(["mnist"]),
-        "group": tune.grid_search(["c8", "c32", "c64", "d4", "d16", "d32"]),
+        "group": tune.grid_search(["c8"]),  # , "c32", "c64", "d4", "d16", "d32"]),
     }
     scheduler = ASHAScheduler(max_t=100, grace_period=5, reduction_factor=2)
 
