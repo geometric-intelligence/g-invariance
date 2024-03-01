@@ -41,6 +41,13 @@ class AugmentedDataset(datasets.VisionDataset):
             self.targets = np.load(self._target_path)
             return
 
+        # Note: More datasets can be used, but channels need to be taken into
+        # account.
+        if dataset_name not in ["MNIST", "EMNIST", "FashionMNIST"]:
+            raise ValueError(
+                "dataset_name must be one of ['MNIST', 'EMNIST', 'FashionMNIST']"
+            )
+        kwargs = {}
         if dataset_name == "EMNIST":
             kwargs = {"split": "letters"}
         ds = getattr(datasets, dataset_name)(root, train=train, download=True, **kwargs)
