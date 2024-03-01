@@ -32,14 +32,18 @@ class AugmentedDataset(datasets.VisionDataset):
         train_str = "train" if train else "val"
         filename_suffix = f"{group}_{n_samples}_{sampling_method}_{train_str}.npy"
         self._data_path = os.path.join(root, f"{dataset_name}_data_{filename_suffix}")
-        self._target_path = os.path.join(root, f"{dataset_name}_labels_{filename_suffix}")
+        self._target_path = os.path.join(
+            root, f"{dataset_name}_labels_{filename_suffix}"
+        )
         self.group = group
         if os.path.exists(self._data_path) and os.path.exists(self._target_path):
             self.data = np.load(self._data_path)
             self.targets = np.load(self._target_path)
             return
 
-        ds = getattr(datasets, dataset_name)(root, train=train, download=True)
+        if dataset_name == "EMNIST":
+            kwargs = {"split": "letters"}
+        ds = getattr(datasets, dataset_name)(root, train=train, download=True, **kwargs)
 
         data = []
         targets = []
@@ -49,7 +53,6 @@ class AugmentedDataset(datasets.VisionDataset):
         # TODO: joblib parallelize this
         for img, label in ds:
             x = np.array(img)
-            print(x.shape)
             rotations = self.get_samples()
             rotated_images = [rotate(x, t, resize=True) for t in rotations]
             resized_images = [

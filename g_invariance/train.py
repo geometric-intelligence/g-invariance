@@ -7,12 +7,13 @@ import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
 import yaml
-import g_invariance.dataset as g_dataset
-from g_invariance import dataset, model, rich_gi
 from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
+
+import g_invariance.dataset as g_dataset
+from g_invariance import dataset, model, rich_gi
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 
@@ -123,7 +124,9 @@ class MNISTDataModule(pl.LightningDataModule):
                 )
                 val_count = int(len(dataset) * 0.2)
                 train_count = len(dataset) - val_count
-                self.data_train, self.data_val = random_split(dataset, [train_count, val_count])
+                self.data_train, self.data_val = random_split(
+                    dataset, [train_count, val_count]
+                )
 
                 self.data_test = g_dataset.AugmentedDataset(
                     self.config.dataset_dir,
@@ -133,7 +136,6 @@ class MNISTDataModule(pl.LightningDataModule):
                     n_samples=self.config.augmentation_factor,
                     dataset_name=self.config.dataset_name,
                 )
-
 
     def train_dataloader(self):
         return DataLoader(
