@@ -7,7 +7,8 @@ import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
 import yaml
-from bispectrum import dataset, model, rich_gi
+import g_invariance.dataset as g_dataset
+from g_invariance import dataset, model, rich_gi
 from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
@@ -111,33 +112,28 @@ class MNISTDataModule(pl.LightningDataModule):
     def setup(self, stage=None):
         if stage == "fit":
             with FileLock(f"{self.config.dataset_dir}.lock"):
-                if self.config.dataset == "mnist":
-                    # TODO: Train/Val datasets need splits with disjoint sets of angles.
-                    mnist = dataset.AugmentedMNIST(
-                        self.config.dataset_dir,
-                        train=True,
-                        group="o2",
-                        transform=self.transforms,
-                        n_samples=self.config.augmentation_factor,
-                    )
-                    self.data_train, self.data_val = random_split(
-                        mnist,
-                        [
-                            55000 * self.config.augmentation_factor,
-                            5000 * self.config.augmentation_factor,
-                        ],
-                    )
+                # TODO: Train/Val datasets need splits with disjoint sets of angles.
+                dataset = g_dataset.AugmentedDataset(
+                    self.config.dataset_dir,
+                    train=True,
+                    group="o2",
+                    transform=self.transforms,
+                    n_samples=self.config.augmentation_factor,
+                    dataset_name=self.config.dataset_name,
+                )
+                val_count = int(len(dataset) * 0.2)
+                train_count = len(dataset) - val_count
+                self.data_train, self.data_val = random_split(dataset, [train_count, val_count])
 
-                    self.data_test = dataset.AugmentedMNIST(
-                        self.config.dataset_dir,
-                        train=False,
-                        group="o2",
-                        transform=self.transforms,
-                        n_samples=self.config.augmentation_factor,
-                    )
-                elif config.dataset == "emnist":
-                    # TODO: Implement emnist dataset
-                    pass
+                self.data_test = g_dataset.AugmentedDataset(
+                    self.config.dataset_dir,
+                    train=False,
+                    group="o2",
+                    transform=self.transforms,
+                    n_samples=self.config.augmentation_factor,
+                    dataset_name=self.config.dataset_name,
+                )
+
 
     def train_dataloader(self):
         return DataLoader(
