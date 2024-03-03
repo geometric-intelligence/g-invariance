@@ -54,21 +54,22 @@ class AugmentedDataset(datasets.VisionDataset):
 
         data = []
         targets = []
-        print("generating data augmentation...")
+        print("Data augmentation...")
 
         target_size = int(np.ceil(np.sqrt(2) * self.MNIST_SIZE) + 1)
         # TODO: joblib parallelize this
         for img, label in ds:
             x = np.array(img)
-            rotations = self.get_samples()
+            rotations, flips = self.get_samples()
             rotated_images = [rotate(x, t, resize=True) for t in rotations]
+            images_to_resize = rotated_images
+            if self.group == "o2":
+                images_to_resize = [np.flip(x) if f else x for f, x in zip(flips, rotated_images)]
             resized_images = [
                 self.resize_image(img, target_size=target_size)
-                for img in rotated_images
+                for img in images_to_resize
             ]
-            if self.group == "so2":
-                # TODO: Implement flips
-                raise NotImplementedError("Flips not implemented for O2")
+
             for x in resized_images:
                 data.append(x)
                 targets.append(label)
@@ -100,11 +101,13 @@ class AugmentedDataset(datasets.VisionDataset):
         if self.sampling_method == "linspace":
             rot = 360.0 / self.n_samples
             rotations = np.array([rot * i for i in range(self.n_samples)])
+            flips = np.hstack([np.zeros(self.n), np.ones(self.n_samples)])
         else:
             rotations = np.random.choice(
                 np.arange(360), size=self.n_samples, replace=False
             )
-        return rotations
+            flips = np.random.randint(low=0, high=2, size=(self.n_samples,))
+        return rotations, flips
 
     def __getitem__(self, index: int) -> Tuple[Any, Any]:
         """

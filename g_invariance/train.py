@@ -117,7 +117,7 @@ class MNISTDataModule(pl.LightningDataModule):
                 dataset = g_dataset.AugmentedDataset(
                     self.config.dataset_dir,
                     train=True,
-                    group="o2",
+                    group=self.config.data_augmentation,
                     transform=self.transforms,
                     n_samples=self.config.augmentation_factor,
                     dataset_name=self.config.dataset_name,
@@ -131,7 +131,7 @@ class MNISTDataModule(pl.LightningDataModule):
                 self.data_test = g_dataset.AugmentedDataset(
                     self.config.dataset_dir,
                     train=False,
-                    group="o2",
+                    group=self.config.data_augmentation,
                     transform=self.transforms,
                     n_samples=self.config.augmentation_factor,
                     dataset_name=self.config.dataset_name,
