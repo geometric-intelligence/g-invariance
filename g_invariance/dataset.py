@@ -57,7 +57,7 @@ class AugmentedDataset(datasets.VisionDataset):
         print("Data augmentation...")
 
         target_size = int(np.ceil(np.sqrt(2) * self.MNIST_SIZE) + 1)
-        # TODO: joblib parallelize this
+        # TODO:joblib parallelize this
         for img, label in ds:
             x = np.array(img)
             rotations, flips = self.get_samples()
@@ -77,6 +77,9 @@ class AugmentedDataset(datasets.VisionDataset):
                 targets.append(label)
         self.data = np.stack(data, axis=0)
         self.targets = np.array(targets)
+        if dataset_name == "EMNIST":
+            # EMNIST has 26 classes, but the labels are 1-indexed
+            self.targets = self.targets - 1
         if not os.path.exists(root):
             print(f"Creating directory {root}...")
             os.makedirs(root)
