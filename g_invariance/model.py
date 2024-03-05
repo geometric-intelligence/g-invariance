@@ -21,12 +21,6 @@ class Net(nn.Module):
         "max": (gtc_pooling.GroupPooling, 4),
     }
 
-    CLASS_COUNT_MAP = {
-        "MNIST": 10,
-        "EMNIST": 26,
-        "FashionMNIST": 10,
-    }
-
     def __init__(self, config):
         super(Net, self).__init__()
 
@@ -44,7 +38,7 @@ class Net(nn.Module):
         self.model = self.model = torch.nn.Sequential(
             conv_block,
             self.POOLING_MAP[config.pooling][0](
-                idx=None, group_type=config.group_type, in_type=conv_block.out_type
+                idx=None, group_type=config.group, in_type=conv_block.out_type
             ),
             gtc_modules.GTtoT(),
             gtc_modules.Ravel(),

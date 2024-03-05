@@ -42,7 +42,9 @@ def read_config_from_file(path: str = CONFIG_FILE) -> Config:
 class MNISTClassifier(pl.LightningModule):
     def __init__(self, config):
         super(MNISTClassifier, self).__init__()
-        self.accuracy = Accuracy(task="multiclass", num_classes=10, top_k=1)
+        self.accuracy = Accuracy(
+            task="multiclass", num_classes=config.fc_sizes[-1], top_k=1
+        )
         self.lr = config["lr"]
         self.model = model.Net(config)
         self.eval_loss = []
@@ -112,7 +114,7 @@ class MNISTDataModule(pl.LightningDataModule):
 
     def setup(self, stage=None):
         if stage == "fit":
-            with FileLock(f"{self.config.dataset_dir}.lock"):
+            with FileLock(f"{self.config.dataset_dir}/.lock"):
                 # TODO: Train/Val datasets need splits with disjoint sets of angles.
                 dataset = g_dataset.AugmentedDataset(
                     self.config.dataset_dir,

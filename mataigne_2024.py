@@ -125,7 +125,7 @@ def tune_mnist_asha(num_samples=10):
                 },
                 "EMNIST": {
                     "tc": [50, 64, 64, 26],
-                    # TODO: Update the paper, last layer is inconsitent with this.
+                    # TODO: Update the paper, last layer is inconsistent with this.
                     "bsp": [64, 64, 64, 26],
                     "max": [350, 64, 64, 26],
                 },
@@ -140,12 +140,12 @@ def tune_mnist_asha(num_samples=10):
         return data_augmentation_map[config["group"]]
 
     def n_filters(spec):
-        data_augmentation_map = {
+        n_filters_map = {
             "cyclic": {"MNIST": 24, "EMNIST": 24},
             "dihedral": {"MNIST": 4, "EMNIST": 20},
         }
         config = spec.config["train_loop_config"]
-        return data_augmentation_map[config["group"]]
+        return n_filters_map[config["group"]]
 
     search_space = {
         "pooling": tune.grid_search(["bsp", "tc", "max"]),
