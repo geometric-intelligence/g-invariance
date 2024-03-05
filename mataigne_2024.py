@@ -108,14 +108,11 @@ def tune_mnist_asha(num_samples=10):
             "cyclic": {
                 "MNIST": {
                     "tc": [64, 64, 64, 10],
-                    # TODO: Evaluate if FBSP is needed and differences between BSP/FBSP
-                    "FBSP": [20, 20, 20, 10],
                     "bsp": [64, 64, 64, 10],
                     "max": [275, 64, 64, 10],
                 },
                 "EMNIST": {
                     "tc": [64, 64, 64, 26],
-                    "FBSP": [26, 26, 26, 26],
                     "bsp": [64, 64, 64, 26],
                     "max": [275, 64, 64, 26],
                 },
