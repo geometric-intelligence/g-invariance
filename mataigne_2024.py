@@ -59,7 +59,7 @@ def tune_mnist_asha(num_samples=10):
         None
     """
     scaling_config = ScalingConfig(
-        num_workers=1, use_gpu=True, resources_per_worker={"CPU": 12, "GPU": 1}
+        num_workers=8, use_gpu=True, resources_per_worker={"CPU": 4, "GPU": 1}
     )
 
     run_config = RunConfig(
