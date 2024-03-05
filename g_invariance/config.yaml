@@ -16,10 +16,10 @@ workers: 10
 num_workers: 8
 N: 8
 pooling: 'tc'
-group_type: 'cyclic'
+group: 'cyclic'
 dataset_name: 'MNIST'
 augmentation_factor: 2
 dataset_dir: '/tmp/datasets/'
 n_channels: 4
 fc_sizes: [64, 64, 64, 10]
-data_augmentation: 'o2'
+data_augmentation: 'so2'

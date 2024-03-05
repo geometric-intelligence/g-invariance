@@ -64,7 +64,9 @@ class AugmentedDataset(datasets.VisionDataset):
             rotated_images = [rotate(x, t, resize=True) for t in rotations]
             images_to_resize = rotated_images
             if self.group == "o2":
-                images_to_resize = [np.flip(x) if f else x for f, x in zip(flips, rotated_images)]
+                images_to_resize = [
+                    np.flip(x) if f else x for f, x in zip(flips, rotated_images)
+                ]
             resized_images = [
                 self.resize_image(img, target_size=target_size)
                 for img in images_to_resize

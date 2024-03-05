@@ -16,7 +16,7 @@ from ray.train import lightning as ray_lightning
 from ray.train.torch import TorchTrainer
 from ray.tune.schedulers import ASHAScheduler
 
-import g_invariance.train as g_invariance_train
+import g_invariance.train as g_train
 
 
 def train_func(config):
@@ -29,12 +29,11 @@ def train_func(config):
     Returns:
         None
     """
-    config_param = g_invariance_train.read_config_from_file()
+    config_param = g_train.read_config_from_file()
     setup_wandb(config)
     config_param.update(config)
-    print(config_param)
-    dm = g_invariance_train.MNISTDataModule(config_param)
-    model = g_invariance_train.MNISTClassifier(config_param)
+    dm = g_train.MNISTDataModule(config_param)
+    model = g_train.MNISTClassifier(config_param)
 
     trainer = pl.Trainer(
         devices="auto",
@@ -64,7 +63,7 @@ def tune_mnist_asha(num_samples=10):
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project="g_invariance_mnist")],
+        callbacks=[WandbLoggerCallback(project="g_invariance")],
         checkpoint_config=CheckpointConfig(
             num_to_keep=2,
             checkpoint_score_attribute="ptl/val_accuracy",
@@ -124,14 +123,12 @@ def tune_mnist_asha(num_samples=10):
             "dihedral": {
                 "MNIST": {
                     "tc": [64, 64, 64, 10],
-                    "FBSP": [20, 20, 20, 10],
                     "bsp": [500, 64, 64, 10],
                     "max": [1850, 64, 64, 10],
                 },
                 "EMNIST": {
                     "tc": [50, 64, 64, 26],
                     # TODO: Update the paper, last layer is inconsitent with this.
-                    "FBSP": [32, 64, 64, 26],
                     "bsp": [64, 64, 64, 26],
                     "max": [350, 64, 64, 26],
                 },
@@ -144,12 +141,15 @@ def tune_mnist_asha(num_samples=10):
         data_augmentation_map = {"cyclic": "sO2", "dihedral": "o2"}
         config = spec.config["train_loop_config"]
         return data_augmentation_map[config["group"]]
-    
+
     def n_filters(spec):
-        data_augmentation_map = {'cyclic': {'MNIST': 24, 'EMNIST': 24}, 'dihedral': {'MNIST': 4, 'EMNIST': 20}} 
+        data_augmentation_map = {
+            "cyclic": {"MNIST": 24, "EMNIST": 24},
+            "dihedral": {"MNIST": 4, "EMNIST": 20},
+        }
         config = spec.config["train_loop_config"]
         return data_augmentation_map[config["group"]]
-    
+
     search_space = {
         "pooling": tune.grid_search(["bsp", "tc", "max"]),
         "dataset_name": tune.grid_search(["MNIST", "EMNIST"]),
