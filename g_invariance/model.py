@@ -13,10 +13,18 @@ import g_invariance.pooling as gtc_pooling
 class Net(nn.Module):
     # TODO: Currently the output size is hardcoded, should be
     # computed from the input size, conv and the pooling layer
+
+    # TODO: These sizes depend on more parameters - implement it.
     POOLING_MAP = {
         "bsp": (gtc_pooling.BspGroupPooling, 212),
         "tc": (gtc_pooling.TCGroupPooling, 544),
         "max": (gtc_pooling.GroupPooling, 4),
+    }
+
+    CLASS_COUNT_MAP = {
+        "MNIST": 10,
+        "EMNIST": 26,
+        "FashionMNIST": 10,
     }
 
     def __init__(self, config):
@@ -27,13 +35,12 @@ class Net(nn.Module):
             N=config.N,
             # Should this match SO2/O2? i.e no flip?
             action=gspaces.flipRot2dOnR2,
-            n_channels=4,
+            n_channels=config.n_channels,
             kernel_size=16,
             padding=0,
             bias=False,
         )
         # TODO: Should be computed directly from the conv_block
-
         self.model = self.model = torch.nn.Sequential(
             conv_block,
             self.POOLING_MAP[config.pooling][0](
@@ -42,15 +49,15 @@ class Net(nn.Module):
             gtc_modules.GTtoT(),
             gtc_modules.Ravel(),
             gtc_modules.FullyConnectedBlock(
-                in_dim=self.POOLING_MAP[config.pooling][1], out_dim=config.out_dim
+                in_dim=self.POOLING_MAP[config.pooling][1], out_dim=config.fc_sizes[0]
             ),
             gtc_modules.FullyConnectedBlock(
-                in_dim=config.out_dim, out_dim=config.out_dim
+                in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]
             ),
             gtc_modules.FullyConnectedBlock(
-                in_dim=config.out_dim, out_dim=config.out_dim
+                in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]
             ),
-            gtc_modules.Linear(in_dim=config.out_dim, out_dim=10),
+            gtc_modules.Linear(in_dim=config.fc_sizes[2], out_dim=config.fc_sizes[3]),
         )
 
     def forward(self, x):
