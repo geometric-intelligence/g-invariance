@@ -1,11 +1,6 @@
 """
-This module performs hyperparameter tuning for the MNIST dataset using the ASHA algorithm.
-
-It defines a training function `train_func` that trains a PyTorch model using the provided configuration.
-It also defines a function `tune_mnist_asha` that performs hyperparameter tuning using the ASHA algorithm.
-
-Example:
-    results = tune_mnist_asha(num_samples=100)
+Implements the paper: Efficient, Complete G-Invariance for G-Equivariant Networks
+via Algorithmic Reduction, Mataigne et al, 2024.
 """
 
 import pytorch_lightning as pl
@@ -48,18 +43,9 @@ def train_func(config):
     trainer.fit(model, datamodule=dm)
 
 
-def tune_mnist_asha(num_samples=10):
-    """
-    Performs hyperparameter tuning for the MNIST dataset using the ASHA algorithm.
-
-    Args:
-        num_samples (int): The number of hyperparameter configurations to sample.
-
-    Returns:
-        None
-    """
+def search_pooling():
     scaling_config = ScalingConfig(
-        num_workers=8, use_gpu=True, resources_per_worker={"CPU": 4, "GPU": 1}
+        num_workers=1, use_gpu=True, resources_per_worker={"CPU": 3, "GPU": 1}
     )
 
     run_config = RunConfig(
@@ -135,7 +121,7 @@ def tune_mnist_asha(num_samples=10):
         return fc_sizes[config["group"]][config["dataset_name"]][config["pooling"]]
 
     def data_augmentation(spec):
-        data_augmentation_map = {"cyclic": "sO2", "dihedral": "o2"}
+        data_augmentation_map = {"cyclic": "so2", "dihedral": "o2"}
         config = spec.config["train_loop_config"]
         return data_augmentation_map[config["group"]]
 
@@ -156,7 +142,6 @@ def tune_mnist_asha(num_samples=10):
         "data_augmentation": tune.sample_from(data_augmentation),
         "n_filters": tune.sample_from(n_filters),
     }
-    scheduler = ASHAScheduler(max_t=100, grace_period=5, reduction_factor=2)
 
     def trial_str_creator(trial):
         config = trial.config["train_loop_config"]
@@ -168,8 +153,8 @@ def tune_mnist_asha(num_samples=10):
         tune_config=tune.TuneConfig(
             metric="ptl/val_accuracy",
             mode="max",
-            num_samples=num_samples,
-            scheduler=scheduler,
+            # TODO: Infer num samples from search space.
+            num_samples=12,
             trial_name_creator=trial_str_creator,
         ),
     )
@@ -178,4 +163,5 @@ def tune_mnist_asha(num_samples=10):
 
 if __name__ == "__main__":
 
-    tune_mnist_asha(num_samples=100)
+    results = search_pooling()
+    results.get_dataframe().to_csv('ray_results.csv')

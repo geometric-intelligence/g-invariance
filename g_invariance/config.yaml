@@ -4,7 +4,7 @@ dataset_dir: '/tmp/datasets/'
 seed: 42
 checkpoint_dir: "checkpoints/"
 checkpoint_name_pattern: 'g-invariance-{epoch:03d}'
-log_every_n_steps: 10
+log_every_n_steps: 1
 progress_bar: true
 
 # Data
@@ -12,11 +12,11 @@ data_augmentation: 'so2'
 augmentation_factor: 1
 
 # Training
-batch_size: 512
+batch_size: 128
 gpu_count: 1
 num_workers: 8
 lr: 0.001
-max_epochs: 10
+max_epochs: 30
 
 # Model specs
 N: 8
