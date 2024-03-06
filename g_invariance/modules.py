@@ -31,9 +31,7 @@ class GonR3ConvBlock(torch.nn.Module):
         else:
             self.in_type = in_type
 
-        self.out_type = out_type = nn.FieldType(
-            self.g_act, n_channels * [self.g_act.regular_repr]
-        )
+        self.out_type = out_type = nn.FieldType(self.g_act, n_channels * [self.g_act.regular_repr])
 
         conv = nn.R3Conv(
             in_type=in_type,
@@ -84,9 +82,7 @@ class GonR2ConvBlock(torch.nn.Module):
         else:
             self.in_type = in_type
 
-        self.out_type = out_type = nn.FieldType(
-            self.g_act, n_channels * [self.g_act.regular_repr]
-        )
+        self.out_type = out_type = nn.FieldType(self.g_act, n_channels * [self.g_act.regular_repr])
 
         conv = nn.R2Conv(
             in_type=in_type,
@@ -136,9 +132,7 @@ class SO2onR2ConvBlock(torch.nn.Module):
         if self.in_type is None:
             self.in_type = nn.FieldType(self.g_act, [self.g_act.trivial_repr])
 
-        self.out_type = out_type = nn.FieldType(
-            self.g_act, n_channels * [self.g_act.regular_repr]
-        )
+        self.out_type = out_type = nn.FieldType(self.g_act, n_channels * [self.g_act.regular_repr])
 
         conv = nn.R2Conv(
             in_type=in_type,

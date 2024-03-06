@@ -15,4 +15,6 @@ jsonpickle
 cplxmodule
 escnn
 einops
+ruff=="0.3.0"
+poetry
 transform-datasets @ git+https://github.com/sophiaas/transform-datasets.git
