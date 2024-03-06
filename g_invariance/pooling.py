@@ -4,8 +4,12 @@ import torch
 from escnn.nn import GeometricTensor
 from escnn.nn.modules.invariantmaps import GroupPooling
 
-from g_invariance.functional import (build_Fplus_vectorized, clebsch_gordan,
-                                     first_last_cb, get_cayley_table)
+from g_invariance.functional import (
+    build_Fplus_vectorized,
+    clebsch_gordan,
+    first_last_cb,
+    get_cayley_table,
+)
 
 
 class TCGroupPoolingEfficient(GroupPooling):
@@ -44,8 +48,8 @@ class TCGroupPoolingEfficient(GroupPooling):
         spatial_shape = input.shape[2:]
 
         for s, contiguous in self._contiguous.items():
-            in_indices = getattr(self, "in_indices_{}".format(s))
-            out_indices = getattr(self, "out_indices_{}".format(s))
+            in_indices = getattr(self, 'in_indices_{}'.format(s))
+            out_indices = getattr(self, 'out_indices_{}'.format(s))
 
             if contiguous:
                 fm = input[:, in_indices[0] : in_indices[1], ...]
@@ -74,7 +78,7 @@ class TCGroupPoolingEfficient(GroupPooling):
 
 
 class TCGroupPooling(GroupPooling):
-    def __init__(self, in_type, group_type="cyclic", idx=None, **kwargs):
+    def __init__(self, in_type, group_type='cyclic', idx=None, **kwargs):
         """
         group_type should be "cyclic" or "dihedral"
         """
@@ -141,8 +145,8 @@ class TCGroupPooling(GroupPooling):
         spatial_shape = input.shape[2:]
 
         for s, contiguous in self._contiguous.items():
-            in_indices = getattr(self, "in_indices_{}".format(s))
-            out_indices = getattr(self, "out_indices_{}".format(s))
+            in_indices = getattr(self, 'in_indices_{}'.format(s))
+            out_indices = getattr(self, 'out_indices_{}'.format(s))
 
             if contiguous:
                 fm = input[:, in_indices[0] : in_indices[1], ...]
@@ -152,9 +156,9 @@ class TCGroupPooling(GroupPooling):
             # split the channel dimension in 2 dimensions, separating fields
             fm = fm.view(b, -1, s, *spatial_shape)
 
-            if self.group_type == "cyclic":
+            if self.group_type == 'cyclic':
                 output = self.triple_correlation_vectorized_batch_cyclic(fm.squeeze())
-            elif self.group_type == "dihedral":
+            elif self.group_type == 'dihedral':
                 output = self.triple_correlation_vectorized_batch_dihedral(fm.squeeze())
             else:
                 raise ValueError("group_type should be 'cyclic' or 'dihedral'")
@@ -216,7 +220,7 @@ class TCGroupPoolingR2Spatial(torch.nn.Module):
 
 
 class BspGroupPooling(GroupPooling):
-    def __init__(self, in_type, group_type="cyclic", idx=None, **kwargs):
+    def __init__(self, in_type, group_type='cyclic', idx=None, **kwargs):
         """
         group_type should be "cyclic" or "dihedral"
 
@@ -237,13 +241,9 @@ class BspGroupPooling(GroupPooling):
         self.CBmatrices = torch.zeros(n3, 4, 4, requires_grad=False)
         self.CBmatrices[0, ...], self.indices[:, 0] = first_last_cb(n, end=False)
         for i in range(2, n2):
-            self.CBmatrices[i - 1, ...], self.indices[:, i - 1] = clebsch_gordan(
-                1, i, n
-            )
+            self.CBmatrices[i - 1, ...], self.indices[:, i - 1] = clebsch_gordan(1, i, n)
         if n % 2 == 0:
-            self.CBmatrices[n2 - 1, ...], self.indices[:, n2 - 1] = first_last_cb(
-                n, end=True
-            )
+            self.CBmatrices[n2 - 1, ...], self.indices[:, n2 - 1] = first_last_cb(n, end=True)
 
     def fourier_transform_vectorized_batch_cyclic(self, f):
         """
@@ -269,9 +269,9 @@ class BspGroupPooling(GroupPooling):
         fhat[:, :, 0, 0, 0] = f.sum(axis=2)
         fhat[:, :, 1, 0, 0] = f[:, :, :n].sum(axis=2) - f[:, :, n:].sum(axis=2)
         if n % 2 == 0:
-            fhat[:, :, 0, 1, 0] = f[:, :, 0 : 2 * n : 2].sum(axis=2) - f[
-                :, :, 1 : 2 * n : 2
-            ].sum(axis=2)
+            fhat[:, :, 0, 1, 0] = f[:, :, 0 : 2 * n : 2].sum(axis=2) - f[:, :, 1 : 2 * n : 2].sum(
+                axis=2
+            )
             fhat[:, :, 1, 1, 0] = (
                 f[:, :, 0:n:2].sum(axis=2)
                 - f[:, :, 1:n:2].sum(axis=2)
@@ -286,7 +286,7 @@ class BspGroupPooling(GroupPooling):
         rho = torch.concat(
             (torch.cos(omega), -torch.sin(omega), torch.sin(omega), torch.cos(omega))
         )
-        rho = einops.rearrange(rho, "(c1 c2 w) h  -> c1 c2 w h", c1=2, c2=2).to(device)
+        rho = einops.rearrange(rho, '(c1 c2 w) h  -> c1 c2 w h', c1=2, c2=2).to(device)
         rho1 = rho.clone()
         rho1[:, 1] *= -1
         # Computes 2x2 Fourier coefficients
@@ -299,7 +299,7 @@ class BspGroupPooling(GroupPooling):
         return fhat
 
     def bispectrum_selective_vectorized_batch_cyclic(self, x):
-        """
+        r"""
         Compute the selective bispectrum beta using 1d DFT.
         Input: The 1d Fourier transform on Z/nZ.
         Returns: Only the |G| bispectrum elements needed for completeness.
@@ -310,16 +310,10 @@ class BspGroupPooling(GroupPooling):
         b, c, n = fhat.shape
         beta = torch.zeros(fhat.shape) * 1j
         beta = beta.to(device)
-        beta[..., 0] = (
-            fhat[..., 0] * fhat[..., 0] * torch.conj(fhat[..., 0])
-        )  # beta[0, 0]
-        beta[..., 1] = (
-            fhat[..., 0] * fhat[..., 1] * torch.conj(fhat[..., 1])
-        )  # beta[0, 1]
+        beta[..., 0] = fhat[..., 0] * fhat[..., 0] * torch.conj(fhat[..., 0])  # beta[0, 0]
+        beta[..., 1] = fhat[..., 0] * fhat[..., 1] * torch.conj(fhat[..., 1])  # beta[0, 1]
         beta[..., 2:] = (
-            fhat[..., 1].unsqueeze(2)
-            * fhat[..., 1 : n - 1]
-            * torch.conj(fhat[..., 2:n])
+            fhat[..., 1].unsqueeze(2) * fhat[..., 1 : n - 1] * torch.conj(fhat[..., 2:n])
         )
         betareal = torch.zeros(b, c, 2 * n).to(device)
         betareal[..., 0 : 2 * n : 2] = beta.real
@@ -327,7 +321,7 @@ class BspGroupPooling(GroupPooling):
         return betareal
 
     def bispectrum_full_vectorized_batch_cyclic(self, x):
-        """
+        r"""
         Compute the full bispectrum beta using 1d DFT (lower triangular elements because of symmetry).
         Input: The 1d Fourier transform on Z/nZ.
         Returns: Only the |G| bispectrum elements needed for completeness.
@@ -379,20 +373,19 @@ class BspGroupPooling(GroupPooling):
         beta1i = torch.zeros(bs, cs, n3, 4, 4).to(device)
         # indices = np.zeros(2, dtype = int)
 
-        CBmatrix, indices = self.CBmatrices[0, ...].to(device), self.indices[:, 0].to(
-            device
+        CBmatrix, indices = (
+            self.CBmatrices[0, ...].to(device),
+            self.indices[:, 0].to(device),
         )  # first_last_cb(n, end=False)
         Fplus = build_Fplus_vectorized(indices, fhat, n, end=False).to(device)
         # beta = (fhat \otimes fhat) * C * F.T * C.T = (fhat \otimes fhat) * C * (C * F).T
-        fh_kron_fh = (
-            fhat[:, :, :, None, :, None, 1] * fhat[:, :, None, :, None, :, 1]
-        ).reshape((bs, cs, 4, 4))
+        fh_kron_fh = (fhat[:, :, :, None, :, None, 1] * fhat[:, :, None, :, None, :, 1]).reshape(
+            (bs, cs, 4, 4)
+        )
         fh_kron_fh_C = torch.sum(
             fh_kron_fh[:, :, :, :, None] * CBmatrix[None, None, None, :, :], axis=3
         )
-        C_Fplus = torch.sum(
-            CBmatrix[None, None, :, :, None] * Fplus[:, :, None, :, :], axis=3
-        )
+        C_Fplus = torch.sum(CBmatrix[None, None, :, :, None] * Fplus[:, :, None, :, :], axis=3)
         beta1i[:, :, 0, :, :] = torch.sum(
             fh_kron_fh_C[:, :, :, None, :] * C_Fplus[:, :, None, :, :], axis=4
         )
@@ -400,9 +393,10 @@ class BspGroupPooling(GroupPooling):
         # CBmatrix = CBmatrix.clone()
 
         for i in range(2, n2):
-            CBmatrix, indices = self.CBmatrices[i - 1, ...].to(device), self.indices[
-                :, i - 1
-            ].to(device)
+            CBmatrix, indices = (
+                self.CBmatrices[i - 1, ...].to(device),
+                self.indices[:, i - 1].to(device),
+            )
             Fplus[..., :2, :2] = fhat[..., indices[0]]
             Fplus[..., 2:, 2:] = fhat[..., indices[1]]
             fh_kron_fh = (
@@ -411,9 +405,7 @@ class BspGroupPooling(GroupPooling):
             fh_kron_fh_C = torch.sum(
                 fh_kron_fh[:, :, :, :, None] * CBmatrix[None, None, None, :, :], axis=3
             )
-            C_Fplus = torch.sum(
-                CBmatrix[None, None, :, :, None] * Fplus[:, :, None, :, :], axis=3
-            )
+            C_Fplus = torch.sum(CBmatrix[None, None, :, :, None] * Fplus[:, :, None, :, :], axis=3)
             beta1i[:, :, i - 1, :, :] = torch.sum(
                 fh_kron_fh_C[:, :, :, None, :] * C_Fplus[:, :, None, :, :], axis=4
             )
@@ -421,10 +413,9 @@ class BspGroupPooling(GroupPooling):
         # Fplus = torch.zeros(bs, cs, 4, 4).to(device)
         # CBmatrix = CBmatrix.clone().to(device)
         if n % 2 == 0:
-            CBmatrix, indices = self.CBmatrices[n2 - 1, ...].to(device), self.indices[
-                :, n2 - 1
-            ].to(
-                device
+            CBmatrix, indices = (
+                self.CBmatrices[n2 - 1, ...].to(device),
+                self.indices[:, n2 - 1].to(device),
             )  # first_last_cb(n, end=True)
             Fplus = build_Fplus_vectorized(indices, fhat, n, end=True).to(device)
             fh_kron_fh = (
@@ -433,9 +424,7 @@ class BspGroupPooling(GroupPooling):
             fh_kron_fh_C = torch.sum(
                 fh_kron_fh[:, :, :, :, None] * CBmatrix[None, None, None, :, :], axis=3
             )
-            C_Fplus = torch.sum(
-                CBmatrix[None, None, :, :, None] * Fplus[:, :, None, :, :], axis=3
-            )
+            C_Fplus = torch.sum(CBmatrix[None, None, :, :, None] * Fplus[:, :, None, :, :], axis=3)
             beta1i[:, :, n2 - 1, :, :] = torch.sum(
                 fh_kron_fh_C[:, :, :, None, :] * C_Fplus[:, :, None, :, :], axis=4
             )
@@ -468,8 +457,8 @@ class BspGroupPooling(GroupPooling):
         spatial_shape = input.shape[2:]
 
         for s, contiguous in self._contiguous.items():
-            in_indices = getattr(self, "in_indices_{}".format(s))  # self.in_indices_0
-            out_indices = getattr(self, "out_indices_{}".format(s))
+            in_indices = getattr(self, 'in_indices_{}'.format(s))  # self.in_indices_0
+            out_indices = getattr(self, 'out_indices_{}'.format(s))
 
             if contiguous:
                 fm = input[:, in_indices[0] : in_indices[1], ...]
@@ -480,13 +469,13 @@ class BspGroupPooling(GroupPooling):
             fm = fm.view(b, -1, s, *spatial_shape)
             # fm is feature map
             bm, cm = fm.shape[:2]
-            if self.group_type == "cyclic":
+            if self.group_type == 'cyclic':
                 n = fm.shape[2]
                 # output = self.bispectrum_full_vectorized_batch_cyclic(fm.squeeze())
                 output = self.bispectrum_selective_vectorized_batch_cyclic(fm.squeeze())
-            elif self.group_type == "product_cyclic":
+            elif self.group_type == 'product_cyclic':
                 output = self.bispectrum_product_cyclic(fm.squeeze())
-            elif self.group_type == "dihedral":
+            elif self.group_type == 'dihedral':
                 n = int(fm.shape[2] / 2)
                 output = self.bispectrum_vectorized_batch_dihedral(fm.squeeze(), n)
 

@@ -1,5 +1,5 @@
-"""Definition of a neural network for MNIST classification with 
-   various pooling approaches.
+"""Definition of a neural network for MNIST classification with
+various pooling approaches.
 """
 
 import torch
@@ -49,12 +49,8 @@ class Net(nn.Module):
             gtc_modules.FullyConnectedBlock(
                 in_dim=self.POOLING_MAP[config.pooling][1], out_dim=config.fc_sizes[0]
             ),
-            gtc_modules.FullyConnectedBlock(
-                in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]
-            ),
-            gtc_modules.FullyConnectedBlock(
-                in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]
-            ),
+            gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]),
+            gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
             gtc_modules.Linear(in_dim=config.fc_sizes[2], out_dim=config.fc_sizes[3]),
         )
 
