@@ -16,14 +16,18 @@ class Net(nn.Module):
 
     # TODO: These sizes depend on more parameters - implement it.
     POOLING_MAP = {
-        "bsp": (gtc_pooling.BspGroupPooling, 212),
+        "bsp": (gtc_pooling.BspGroupPooling, 128),
         "tc": (gtc_pooling.TCGroupPooling, 544),
         "max": (gtc_pooling.GroupPooling, 4),
     }
 
     def __init__(self, config):
         super(Net, self).__init__()
-
+        # FIXME: Temporarily hardcoded until a general formula
+        # for the output size is implemented.
+        # The default value is for dihedral group.
+        if config.group == "dihedral":
+            self.POOLING_MAP["bsp"] = (gtc_pooling.BspGroupPooling, 212)
         # Do we even need an external module here?
         conv_block = gtc_modules.GonR2ConvBlock(
             N=config.N,

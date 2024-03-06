@@ -4,7 +4,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 from PIL import Image
-from skimage.transform import resize, rotate
+from skimage.transform import rotate
 from torchvision import datasets
 
 

@@ -10,6 +10,7 @@ pandas
 pydantic
 pytorch-lightning
 ray[tune]
+rich
 scikit-image
 scipy
 torch==2.1

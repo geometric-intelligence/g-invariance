@@ -106,7 +106,7 @@ class MNISTDataModule(pl.LightningDataModule):
             [
                 torchvision_transforms.ToTensor(),
                 # TODO: Some issues when size changes. Understand why.
-                torchvision_transforms.Resize((16,)),
+                torchvision_transforms.Resize((16,), antialias=True),
                 torchvision_transforms.Normalize((0.1307,), (0.3081,)),
             ]
         )
