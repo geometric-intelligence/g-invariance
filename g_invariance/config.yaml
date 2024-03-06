@@ -1,22 +1,27 @@
-name: 'mnist'
+# Misc and system settings
+name: 'g-invariance'
+dataset_dir: '/tmp/datasets/'
 seed: 42
-lr: 0.001
 checkpoint_dir: "checkpoints/"
-checkpoint_name_pattern: 'mnist-{epoch:03d}'
+checkpoint_name_pattern: 'g-invariance-{epoch:03d}'
 log_every_n_steps: 10
-max_epochs: 5
 progress_bar: true
+
+# Data
+data_augmentation: 'so2'
+augmentation_factor: 1
 
 # Training
 batch_size: 512
 gpu_count: 1
 num_workers: 8
+lr: 0.001
+max_epochs: 10
+
+# Model specs
 N: 8
-pooling: 'tc'
+pooling: 'bsp'
 group: 'cyclic'
 dataset_name: 'EMNIST'
-augmentation_factor: 2
-dataset_dir: '/tmp/datasets/'
 n_channels: 4
 fc_sizes: [64, 64, 64, 26]
-data_augmentation: 'so2'
