@@ -11,7 +11,6 @@ from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
-
 import g_invariance.dataset as g_dataset
 from g_invariance import model, rich_gi
 
@@ -43,7 +42,7 @@ class MNISTClassifier(pl.LightningModule):
         super(MNISTClassifier, self).__init__()
         self.accuracy = Accuracy(task='multiclass', num_classes=config.fc_sizes[-1], top_k=1)
         self.lr = config['lr']
-        self.model = model.Net(config)
+        self.model = getattr(model, config.model_name)(config)
         self.eval_loss = []
         self.eval_accuracy = []
         self.config = config
@@ -83,15 +82,7 @@ class MNISTClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer, T_0=1, T_mult=30, verbose=True
-        )
-
-        return {
-            'optimizer': optimizer,
-            'lr_scheduler': lr_scheduler,
-            'monitor': 'ptl/val_loss',
-        }
+        return optimizer
 
 
 class MNISTDataModule(pl.LightningDataModule):
