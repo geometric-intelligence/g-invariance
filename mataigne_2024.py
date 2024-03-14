@@ -32,8 +32,8 @@ def train_func(config):
     model = g_train.MNISTClassifier(config_param)
 
     trainer = pl.Trainer(
-        devices="auto",
-        accelerator="auto",
+        devices='auto',
+        accelerator='auto',
         strategy=ray_lightning.RayDDPStrategy(),
         callbacks=[ray_lightning.RayTrainReportCallback()],
         plugins=[ray_lightning.RayLightningEnvironment()],
@@ -46,15 +46,15 @@ def train_func(config):
 
 def search_pooling():
     scaling_config = ScalingConfig(
-        num_workers=1, use_gpu=True, resources_per_worker={"CPU": 3, "GPU": 1}
+        num_workers=1, use_gpu=True, resources_per_worker={'CPU': 3, 'GPU': 1}
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project="g_invariance")],
+        callbacks=[WandbLoggerCallback(project='g-invariance')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=2,
-            checkpoint_score_attribute="ptl/val_accuracy",
-            checkpoint_score_order="max",
+            checkpoint_score_attribute='ptl/val_accuracy',
+            checkpoint_score_order='max',
         ),
     )
 
@@ -92,57 +92,84 @@ def search_pooling():
     # via Algorithmic Reduction
     def spec_to_fc_size(spec):
         fc_sizes = {
-            "cyclic": {
-                "MNIST": {
-                    "tc": [64, 64, 64, 10],
-                    "bsp": [64, 64, 64, 10],
-                    "max": [275, 64, 64, 10],
+            'cyclic': {
+                'MNIST': {
+                    'tc': [64, 64, 64, 10],
+                    'bsp': [64, 64, 64, 10],
+                    'max': [275, 64, 64, 10],
                 },
-                "EMNIST": {
-                    "tc": [64, 64, 64, 26],
-                    "bsp": [64, 64, 64, 26],
-                    "max": [275, 64, 64, 26],
+                'EMNIST': {
+                    'tc': [64, 64, 64, 26],
+                    'bsp': [64, 64, 64, 26],
+                    'max': [275, 64, 64, 26],
                 },
             },
-            "dihedral": {
-                "MNIST": {
-                    "tc": [64, 64, 64, 10],
-                    "bsp": [500, 64, 64, 10],
-                    "max": [1850, 64, 64, 10],
+            'dihedral': {
+                'MNIST': {
+                    'tc': [64, 64, 64, 10],
+                    'bsp': [500, 64, 64, 10],
+                    'max': [1850, 64, 64, 10],
                 },
-                "EMNIST": {
-                    "tc": [50, 64, 64, 26],
+                'EMNIST': {
+                    'tc': [50, 64, 64, 26],
                     # TODO: Update the paper, last layer is inconsistent with this.
-                    "bsp": [64, 64, 64, 26],
-                    "max": [350, 64, 64, 26],
+                    'bsp': [64, 64, 64, 26],
+                    'max': [350, 64, 64, 26],
                 },
             },
         }
-        config = spec.config["train_loop_config"]
-        return fc_sizes[config["group"]][config["dataset_name"]][config["pooling"]]
+        config = spec['train_loop_config']
+        return fc_sizes[config['group']][config['dataset_name']][config['pooling']]
+
+    def spec_to_pooling_size(spec):
+        pooling_sizes = {
+            'cyclic': {
+                'MNIST': {'tc': 3264, 'bsp': 768, 'max': 24},
+                'EMNIST': {
+                    'tc': 3264,
+                    'bsp': 768,
+                    'max': 24,
+                },
+            },
+            'dihedral': {
+                'MNIST': {
+                    'tc': 544,
+                    'bsp': 212,
+                    'max': 4,
+                },
+                'EMNIST': {
+                    'tc': 2720,
+                    'bsp': 1060,
+                    'max': 20,
+                },
+            },
+        }
+        config = spec['train_loop_config']
+        return pooling_sizes[config['group']][config['dataset_name']][config['pooling']]
 
     def data_augmentation(spec):
-        data_augmentation_map = {"cyclic": "so2", "dihedral": "o2"}
-        config = spec.config["train_loop_config"]
-        return data_augmentation_map[config["group"]]
+        data_augmentation_map = {'cyclic': 'so2', 'dihedral': 'o2'}
+        config = spec['train_loop_config']
+        return data_augmentation_map[config['group']]
 
     def n_filters(spec):
         n_filters_map = {
-            "cyclic": {"MNIST": 24, "EMNIST": 24},
-            "dihedral": {"MNIST": 4, "EMNIST": 20},
+            'cyclic': {'MNIST': 24, 'EMNIST': 24},
+            'dihedral': {'MNIST': 4, 'EMNIST': 20},
         }
-        config = spec.config["train_loop_config"]
-        return n_filters_map[config["group"]]
+        config = spec['train_loop_config']
+        return n_filters_map[config['group']][config['dataset_name']]
 
     search_space = {
-        "pooling": tune.grid_search(["bsp", "tc", "max"]),
-        "dataset_name": tune.grid_search(["MNIST", "EMNIST"]),
-        "group": tune.grid_search(["cyclic", "dihedral"]),
+        'pooling': tune.grid_search(['bsp', 'tc', 'max']),
+        'dataset_name': tune.grid_search(['MNIST', 'EMNIST']),
+        'group': tune.grid_search(['cyclic', 'dihedral']),
         # The next parameters depend on the previous ones.
         "fc_sizes": tune.sample_from(spec_to_fc_size),
         "data_augmentation": tune.sample_from(data_augmentation),
         "n_filters": tune.sample_from(n_filters),
         "seed": tune.uniform(0, MAX_SEED),
+        'pooling_output_size': tune.sample_from(spec_to_pooling_size),
     }
 
     def trial_str_creator(trial):
@@ -151,19 +178,18 @@ def search_pooling():
 
     tuner = tune.Tuner(
         ray_trainer,
-        param_space={"train_loop_config": search_space},
+        param_space={'train_loop_config': search_space},
         tune_config=tune.TuneConfig(
-            metric="ptl/val_accuracy",
-            mode="max",
+            metric='ptl/val_accuracy',
+            mode='max',
             # TODO: Infer num samples from search space.
-            num_samples=12,
+            num_samples=1,
             trial_name_creator=trial_str_creator,
         ),
     )
     return tuner.fit()
 
 
-if __name__ == "__main__":
-
+if __name__ == '__main__':
     results = search_pooling()
     results.get_dataframe().to_csv('ray_results.csv')
