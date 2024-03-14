@@ -6,11 +6,13 @@ import pytorch_lightning.callbacks as pl_callbacks
 import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
+import wandb
 import yaml
 from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
 from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
+
 import g_invariance.dataset as g_dataset
 from g_invariance import model, rich_gi
 
@@ -46,6 +48,10 @@ class MNISTClassifier(pl.LightningModule):
         self.eval_loss = []
         self.eval_accuracy = []
         self.config = config
+
+    def on_fit_start(self):
+        total_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        self.logger.experiment.log({'total_parameters': total_params})
 
     def cross_entropy_loss(self, logits, labels):
         return F.nll_loss(logits, labels)
