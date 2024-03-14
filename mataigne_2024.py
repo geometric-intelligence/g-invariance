@@ -13,6 +13,7 @@ from ray.tune.schedulers import ASHAScheduler
 
 import g_invariance.train as g_train
 
+MAX_SEED = 65535
 
 def train_func(config):
     """
@@ -141,11 +142,12 @@ def search_pooling():
         "fc_sizes": tune.sample_from(spec_to_fc_size),
         "data_augmentation": tune.sample_from(data_augmentation),
         "n_filters": tune.sample_from(n_filters),
+        "seed": tune.uniform(0, MAX_SEED),
     }
 
     def trial_str_creator(trial):
         config = trial.config["train_loop_config"]
-        return f"pooling={config['pooling']},ds={config['dataset_name']},group={config['group']}"
+        return f"pooling={config['pooling']},ds={config['dataset_name']},group={config['group'],seed={config['seed']}"
 
     tuner = tune.Tuner(
         ray_trainer,
