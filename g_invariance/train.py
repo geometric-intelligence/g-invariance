@@ -6,6 +6,7 @@ import pytorch_lightning.callbacks as pl_callbacks
 import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
+import wandb
 import yaml
 from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
@@ -43,10 +44,14 @@ class MNISTClassifier(pl.LightningModule):
         super(MNISTClassifier, self).__init__()
         self.accuracy = Accuracy(task='multiclass', num_classes=config.fc_sizes[-1], top_k=1)
         self.lr = config['lr']
-        self.model = model.Net(config)
+        self.model = getattr(model, config.model_name)(config)
         self.eval_loss = []
         self.eval_accuracy = []
         self.config = config
+
+    def on_fit_start(self):
+        total_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        self.logger.experiment.log({'total_parameters': total_params})
 
     def cross_entropy_loss(self, logits, labels):
         return F.nll_loss(logits, labels)
@@ -83,15 +88,7 @@ class MNISTClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-            optimizer, T_0=1, T_mult=30, verbose=True
-        )
-
-        return {
-            'optimizer': optimizer,
-            'lr_scheduler': lr_scheduler,
-            'monitor': 'ptl/val_loss',
-        }
+        return optimizer
 
 
 class MNISTDataModule(pl.LightningDataModule):
