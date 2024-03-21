@@ -51,7 +51,7 @@ def search_pooling():
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project='g-invariance-seed-best')],
+        callbacks=[WandbLoggerCallback(project='g-invariance')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=2,
             checkpoint_score_attribute='ptl/val_accuracy',
@@ -156,7 +156,7 @@ def search_pooling():
             metric='ptl/val_accuracy',
             mode='max',
             # TODO: Infer num samples from search space.
-            num_samples=1,
+            num_samples=10,
             trial_name_creator=trial_str_creator,
         ),
     )
