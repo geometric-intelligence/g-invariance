@@ -9,6 +9,7 @@ from torch import nn
 
 import g_invariance.modules as gtc_modules
 import g_invariance.pooling as gtc_pooling
+import math
 
 
 class VanillaNet(nn.Module):
@@ -58,6 +59,10 @@ class GInvNet(nn.Module):
             padding=0,
             bias=False,
         )
+        pooling_output_size = self.pooling_output_size(
+            config.pooling, config.n_filters, config.group, config.N
+        )
+        print(pooling_output_size)
         self.model = self.model = torch.nn.Sequential(
             conv_block,
             self.POOLING_MAP[config.pooling](
@@ -65,13 +70,27 @@ class GInvNet(nn.Module):
             ),
             gtc_modules.GTtoT(),
             gtc_modules.Ravel(),
-            gtc_modules.FullyConnectedBlock(
-                in_dim=config.pooling_output_size, out_dim=config.fc_sizes[0]
-            ),
+            gtc_modules.FullyConnectedBlock(in_dim=pooling_output_size, out_dim=config.fc_sizes[0]),
             gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]),
             gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
             gtc_modules.Linear(in_dim=config.fc_sizes[2], out_dim=config.fc_sizes[3]),
         )
+
+    @staticmethod
+    def pooling_output_size(pooling_type, n_filters, group_type, group_size):
+        if pooling_type == 'max':
+            return n_filters
+        elif pooling_type == 'bsp':
+            if group_type == 'cyclic':
+                return 4 * n_filters * group_size
+            elif group_type == 'dihedral':
+                return int(n_filters * (math.floor((group_size - 1) / 2) * 16 + 5))
+            else:
+                raise ValueError(f'unknown group_type: {group_type}')
+        elif pooling_type == 'tc':
+            return int(group_size * 2 * (group_size * 2 + 1) / 2 * n_filters)
+        else:
+            raise ValueError(f'unkown pooling_type: {pooling_type}')
 
     def forward(self, x):
         return F.log_softmax(self.model(x), dim=1)

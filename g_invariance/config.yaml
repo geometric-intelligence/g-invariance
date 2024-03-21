@@ -22,9 +22,8 @@ max_epochs: 30
 model_name: 'GInvNet'
 # model_name: 'VanillaNet'
 N: 8
-pooling: 'bsp'
+pooling: 'tc'
 group: 'cyclic'
-dataset_name: 'EMNIST'
-n_filters: 4
-pooling_output_size: 128
-fc_sizes: [64, 64, 64, 26]
+dataset_name: 'MNIST'
+n_filters: 20
+fc_sizes: [10, 64, 64, 10]
