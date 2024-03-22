@@ -17,7 +17,7 @@ batch_size: 128
 gpu_count: 1
 num_workers: 8
 lr: 0.001
-max_epochs: 30
+max_epochs: 10
 
 # Model specs
 model_name: 'GInvNet'

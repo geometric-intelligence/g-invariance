@@ -39,7 +39,6 @@ class VanillaNet(nn.Module):
 
 
 class GInvNet(nn.Module):
-
     POOLING_MAP = {
         'bsp': gtc_pooling.BspGroupPooling,
         'tc': gtc_pooling.TCGroupPooling,
@@ -96,7 +95,7 @@ class GInvNet(nn.Module):
             if group_type == 'cyclic':
                 return int(group_size * (group_size + 1) / 2 * n_filters)
             elif group_type == 'dihedral':
-                return int(group_size * 2 * (group_size * 2 + 1) / 2 * n_filters)
+                return int(group_size * (group_size * 2 + 1) * n_filters)
             else:
                 raise ValueError(f'unknown group_type: {group_type}')
         else:
