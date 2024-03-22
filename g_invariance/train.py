@@ -56,6 +56,10 @@ class MNISTClassifier(pl.LightningModule):
         wandb.init(config=self.config)
         wandb.config.update({'params': self.param_count})
 
+    def on_fit_start(self):
+        total_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
+        self.logger.experiment.log({'total_parameters': total_params})
+
     def cross_entropy_loss(self, logits, labels):
         return F.nll_loss(logits, labels)
 
