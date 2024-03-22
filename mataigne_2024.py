@@ -67,32 +67,6 @@ def search_pooling():
         scaling_config=scaling_config,
         run_config=run_config,
     )
-    # From the paper:
-    #     Table 2. Classification accuracy and parameters count of the different G-CNNs
-    # models with G-TC, full or selective G-bispectrum or Max G-pooling. The experiments
-    # are conducted on the SO(2)/O(2)-MNIST/EMNIST datasets. There are K = 24 filters
-    # for the C8-CNN. For D8-CNN, there are K = 4/20 filters on O(2)-MNIST/EMNIST
-    # respectively. The MLP specifications are detailed in Appendix D.
-    # The different models are matched to have equivalent numbers of parameters.
-    # **size of all MLP layers set to 26.
-
-    # from Figure 4: bruteforce N filters in [2 3 4 5 6 7 8 9 10] and do:
-    # Max G pooling, G-Triple correlation, Selective bi-spectrum.
-
-    # C8 CNN:            SO2-MNIST        SO2-EMNIST
-    # G-TC             # [64,64,64,10]  # [64,64,64,26]
-    # Full G-bispect.  # [20,20,20,10]  # [26,26,26,26]
-    # Sel. G-bispect.  # [64,64,64,10]  # [64,64,64,26]
-    # Max G-pool.      # [275,64,64,10] # [275,64,64,26]
-
-    # D8 CNN             O(2)-MNIST       O(2)-EMNIST
-    # G-TC              # [64,64,64,10]   # [50,64,64,26]
-    # Sel. G-bispect.   # [500,64,64,10]  # [32,64,64,10]
-    # Max G-pool.       # [1850,64,64,10] # [350,64,64,26]
-
-    # Refer to the matainge et al 2024 paper:
-    # Efficient, Complete G-Invariance for G-Equivariant Networks
-    # via Algorithmic Reduction
     def spec_to_target_params(spec):
         fc_sizes = {
             'cyclic': {
