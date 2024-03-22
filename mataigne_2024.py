@@ -28,10 +28,9 @@ def train_func(config):
     """
     config_param = g_train.read_config_from_file()
     config_param.update(config)
+    setup_wandb(config)
     dm = g_train.MNISTDataModule(config_param)
-    model = g_train.MNISTClassifier(
-        config_param, wandb_setup_callback=setup_wandb, extra_config=config
-    )
+    model = g_train.MNISTClassifier(config_param)
 
     pl.seed_everything(config_param.seed)
     trainer = pl.Trainer(
@@ -71,12 +70,14 @@ def search_pooling():
     def spec_to_target_params(spec):
         fc_sizes = {
             'cyclic': {
-                'MNIST': 35000,
-                'EMNIST': 35000,
+                'MNIST': 40000,
+                'EMNIST': 40000,
+                'CIFAR10': 1000000,
             },
             'dihedral': {
                 'MNIST': 140000,
-                'EMNIST': 42000,
+                'EMNIST': 40000,
+                'CIFAR10': 1000000,
             },
         }
         config = spec['train_loop_config']
@@ -89,27 +90,34 @@ def search_pooling():
 
     def n_filters(spec):
         n_filters_map = {
-            'cyclic': {'MNIST': 24, 'EMNIST': 24},
-            'dihedral': {'MNIST': 4, 'EMNIST': 20},
+            'cyclic': {'MNIST': 24, 'EMNIST': 24, 'CIFAR10': 64},
+            'dihedral': {'MNIST': 4, 'EMNIST': 20, 'CIFAR10': 64},
         }
         config = spec['train_loop_config']
         return n_filters_map[config['group']][config['dataset_name']]
 
     def fc_sizes(spec):
-        fc_sizes_map = {'MNIST': [64, 64, 10], 'EMNIST': [64, 64, 26]}
+        fc_sizes_map = {'MNIST': [64, 64, 10], 'EMNIST': [64, 64, 26], 'CIFAR10': [128, 64, 10]}
         config = spec['train_loop_config']
         return fc_sizes_map[config['dataset_name']]
 
+    def n_input_channels(spec):
+        n_input_channels_map = {'MNIST': 1, 'EMNIST': 1, 'CIFAR10': 3}
+        config = spec['train_loop_config']
+        return n_input_channels_map[config['dataset_name']]
+
     search_space = {
         'pooling': tune.grid_search(['bsp', 'tc', 'max']),
-        'dataset_name': tune.grid_search(['MNIST', 'EMNIST']),
+        'dataset_name': tune.grid_search(['MNIST', 'EMNIST', 'CIFAR10']),
         'group': tune.grid_search(['cyclic', 'dihedral']),
-        'img_size': tune.grid_search([16, 28]),
+        # XXX: We probably don't want 16 and 28 for CIFAR10.
+        'img_size': tune.grid_search([16, 28, 45]),
         'target_params_count': tune.sample_from(spec_to_target_params),
         'data_augmentation': tune.sample_from(data_augmentation),
         'fc_sizes': tune.sample_from(fc_sizes),
         'n_filters': tune.sample_from(n_filters),
         'seed': tune.randint(0, MAX_SEED),
+        'n_input_channels': tune.sample_from(n_input_channels),
     }
 
     def trial_str_creator(trial):

@@ -10,7 +10,7 @@ progress_bar: true
 # Data
 data_augmentation: 'so2'
 augmentation_factor: 1
-img_size: 16
+img_size: 32
 
 # Training
 batch_size: 128
@@ -25,9 +25,10 @@ model_name: 'GInvNet'
 N: 8
 pooling: 'tc'
 group: 'dihedral'
-dataset_name: 'EMNIST'
+dataset_name: 'CIFAR10'
+n_input_channels: 3
 n_filters: 20
 # first fc size is auto determined
 # from target param count
-target_params_count: 140000
-fc_sizes: [64, 64, 26]
+target_params_count: 1000000
+fc_sizes: [64, 64, 10]
