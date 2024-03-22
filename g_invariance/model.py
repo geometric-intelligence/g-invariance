@@ -65,6 +65,9 @@ class GInvNet(nn.Module):
         pooling_output_size = self.pooling_output_size(
             config.pooling, config.n_filters, config.group, config.N
         )
+        first_fc_size = self.get_best_fc_size(
+            pooling_output_size, config.fc_sizes, config.target_params_count
+        )
         self.model = self.model = torch.nn.Sequential(
             conv_block,
             self.POOLING_MAP[config.pooling](
@@ -74,11 +77,34 @@ class GInvNet(nn.Module):
             ),
             gtc_modules.GTtoT(),
             gtc_modules.Ravel(),
-            gtc_modules.FullyConnectedBlock(in_dim=pooling_output_size, out_dim=config.fc_sizes[0]),
+            gtc_modules.FullyConnectedBlock(in_dim=pooling_output_size, out_dim=first_fc_size),
+            gtc_modules.FullyConnectedBlock(in_dim=first_fc_size, out_dim=config.fc_sizes[0]),
             gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]),
-            gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
-            gtc_modules.Linear(in_dim=config.fc_sizes[2], out_dim=config.fc_sizes[3]),
+            gtc_modules.Linear(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
         )
+
+    @staticmethod
+    def estimate_param_count(pooling_output_size, first_fc, fc_sizes):
+        param_count = pooling_output_size * first_fc
+        for i in range(0, len(fc_sizes) - 1):
+            param_count += fc_sizes[i] * fc_sizes[i + 1]
+        return param_count
+
+    @staticmethod
+    def get_best_fc_size(pooling_output_size, fc_sizes, target_params_count):
+        # run a bisection search to find the best fc size
+        left = 0
+        right = target_params_count
+        while left < right:
+            mid = (left + right) // 2
+            if (
+                GInvNet.estimate_param_count(pooling_output_size, mid, fc_sizes)
+                < target_params_count
+            ):
+                left = mid + 1
+            else:
+                right = mid
+        return left
 
     @staticmethod
     def pooling_output_size(pooling_type, n_filters, group_type, group_size):

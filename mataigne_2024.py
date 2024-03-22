@@ -93,35 +93,19 @@ def search_pooling():
     # Refer to the matainge et al 2024 paper:
     # Efficient, Complete G-Invariance for G-Equivariant Networks
     # via Algorithmic Reduction
-    def spec_to_fc_size(spec):
+    def spec_to_target_params(spec):
         fc_sizes = {
             'cyclic': {
-                'MNIST': {
-                    'tc': [64, 64, 64, 10],
-                    'bsp': [64, 64, 64, 10],
-                    'max': [275, 64, 64, 10],
-                },
-                'EMNIST': {
-                    'tc': [64, 64, 64, 26],
-                    'bsp': [64, 64, 64, 26],
-                    'max': [275, 64, 64, 26],
-                },
+                'MNIST': 35000,
+                'EMNIST': 35000,
             },
             'dihedral': {
-                'MNIST': {
-                    'tc': [64, 64, 64, 10],
-                    'bsp': [500, 64, 64, 10],
-                    'max': [1850, 64, 64, 10],
-                },
-                'EMNIST': {
-                    'tc': [50, 64, 64, 26],
-                    'bsp': [32, 64, 64, 26],
-                    'max': [350, 64, 64, 26],
-                },
+                'MNIST': 140000,
+                'EMNIST': 42000,
             },
         }
         config = spec['train_loop_config']
-        return fc_sizes[config['group']][config['dataset_name']][config['pooling']]
+        return fc_sizes[config['group']][config['dataset_name']]
 
     def data_augmentation(spec):
         data_augmentation_map = {'cyclic': 'so2', 'dihedral': 'o2'}
@@ -136,12 +120,19 @@ def search_pooling():
         config = spec['train_loop_config']
         return n_filters_map[config['group']][config['dataset_name']]
 
+    def fc_sizes(spec):
+        fc_sizes_map = {'MNIST': [64, 64, 10], 'EMNIST': [64, 64, 26]}
+        config = spec['train_loop_config']
+        return fc_sizes_map[config['dataset_name']]
+
     search_space = {
         'pooling': tune.grid_search(['bsp', 'tc', 'max']),
         'dataset_name': tune.grid_search(['MNIST', 'EMNIST']),
         'group': tune.grid_search(['cyclic', 'dihedral']),
-        'fc_sizes': tune.sample_from(spec_to_fc_size),
+        'img_size': tune.grid_search([16, 28]),
+        'target_params_count': tune.sample_from(spec_to_target_params),
         'data_augmentation': tune.sample_from(data_augmentation),
+        'fc_sizes': tune.sample_from(fc_sizes),
         'n_filters': tune.sample_from(n_filters),
         'seed': tune.randint(0, MAX_SEED),
     }

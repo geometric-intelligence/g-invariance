@@ -27,4 +27,7 @@ pooling: 'tc'
 group: 'dihedral'
 dataset_name: 'EMNIST'
 n_filters: 20
-fc_sizes: [64, 64, 64, 26]
+# first fc size is auto determined
+# from target param count
+target_params_count: 140000
+fc_sizes: [64, 64, 26]
