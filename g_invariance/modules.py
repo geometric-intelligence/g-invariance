@@ -67,6 +67,7 @@ class GonR2ConvBlock(torch.nn.Module):
         bias=False,
         nonlinearity=None,
         in_type=None,
+        n_input_channels=1,
         **kwargs,
     ):
         super().__init__()
@@ -78,7 +79,9 @@ class GonR2ConvBlock(torch.nn.Module):
         self.g_act = action(N=N)
 
         if in_type is None:
-            self.in_type = in_type = nn.FieldType(self.g_act, [self.g_act.trivial_repr])
+            self.in_type = in_type = nn.FieldType(
+                self.g_act, n_input_channels * [self.g_act.trivial_repr]
+            )
         else:
             self.in_type = in_type
 

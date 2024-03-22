@@ -6,6 +6,7 @@ import numpy as np
 from PIL import Image
 from skimage.transform import rotate
 from torchvision import datasets
+from IPython import embed
 
 
 class AugmentedDataset(datasets.VisionDataset):
@@ -39,10 +40,9 @@ class AugmentedDataset(datasets.VisionDataset):
             self.targets = np.load(self._target_path)
             return
 
-        # Note: More datasets can be used, but channels need to be taken into
-        # account.
-        if dataset_name not in ['MNIST', 'EMNIST', 'FashionMNIST']:
-            raise ValueError("dataset_name must be one of ['MNIST', 'EMNIST', 'FashionMNIST']")
+        allowed_datasets = ['MNIST', 'EMNIST', 'FashionMNIST', 'CIFAR10']
+        if dataset_name not in allowed_datasets:
+            raise ValueError(f'dataset_name must be one of {datasets}')
         kwargs = {}
         if dataset_name == 'EMNIST':
             kwargs = {'split': 'letters'}
@@ -51,9 +51,10 @@ class AugmentedDataset(datasets.VisionDataset):
         data = []
         targets = []
         print('Data augmentation...')
-
-        target_size = int(np.ceil(np.sqrt(2) * self.MNIST_SIZE) + 1)
+        img_width = np.array(ds[0][0]).shape[0]
+        target_size = int(np.ceil(np.sqrt(2) * img_width) + 1)
         # TODO:joblib parallelize this
+        i = 0
         for img, label in ds:
             x = np.array(img)
             rotations, flips = self.get_samples()
@@ -68,6 +69,7 @@ class AugmentedDataset(datasets.VisionDataset):
             for x in resized_images:
                 data.append(x)
                 targets.append(label)
+
         self.data = np.stack(data, axis=0)
         self.targets = np.array(targets)
         if dataset_name == 'EMNIST':
@@ -82,17 +84,32 @@ class AugmentedDataset(datasets.VisionDataset):
 
     @staticmethod
     def resize_image(img, target_size):
-        size, _ = img.shape
-        pad_size = max(target_size - size, 0)
-        pad_top = pad_size // 2
-        pad_bottom = pad_size - pad_top
-        pad = ((pad_top, pad_bottom), (pad_bottom, pad_top))
-        padded_tensor = np.pad(
-            img,
-            pad_width=pad,
-            mode='constant',
-            constant_values=((0, 0), (0, 0)),
-        )
+        # Ensure target size is a tuple for consistency
+        if isinstance(target_size, int):
+            target_height = target_width = target_size
+        else:
+            target_height, target_width = target_size
+
+        # Get image dimensions
+        height, width = img.shape[:2]
+
+        # Calculate padding for height
+        pad_height = max(target_height - height, 0)
+        pad_top = pad_height // 2
+        pad_bottom = pad_height - pad_top
+
+        # Calculate padding for width
+        pad_width = max(target_width - width, 0)
+        pad_left = pad_width // 2
+        pad_right = pad_width - pad_left
+
+        # Pad only spatial dimensions (height and width)
+        if img.ndim == 2:  # Grayscale image (2D)
+            pad = ((pad_top, pad_bottom), (pad_left, pad_right))
+        else:  # Multi-dimensional image
+            pad = ((pad_top, pad_bottom), (pad_left, pad_right)) + ((0, 0),) * (img.ndim - 2)
+        # Apply padding
+        padded_tensor = np.pad(img, pad_width=pad, mode='constant', constant_values=0)
         return padded_tensor
 
     def get_samples(self):
@@ -118,7 +135,10 @@ class AugmentedDataset(datasets.VisionDataset):
 
         # doing this so that it is consistent with all other datasets
         # to return a PIL Image
-        img = Image.fromarray(img, mode='L')
+        if img.ndim == 2:
+            img = Image.fromarray(img, mode='L')
+        else:
+            img = Image.fromarray(img, mode='RGB')
 
         if self.transform is not None:
             img = self.transform(img)

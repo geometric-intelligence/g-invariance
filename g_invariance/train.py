@@ -49,9 +49,6 @@ class MNISTClassifier(pl.LightningModule):
         self.eval_accuracy = []
         self.config = config
         self.param_count = sum(p.numel() for p in self.parameters() if p.requires_grad)
-        # extra_config.update({'param_count': self.param_count})
-        if wandb_setup_callback is not None:
-            wandb_setup_callback(extra_config)
         self.save_hyperparameters()
 
     def on_fit_start(self):
@@ -101,12 +98,21 @@ class MNISTDataModule(pl.LightningDataModule):
         super().__init__()
         self.config = config
         self.batch_size = config.batch_size
+        if config.dataset_name in ['MNIST', 'EMNIST', 'FashionMNIST']:
+            normalize_transform = torchvision_transforms.Normalize((0.1307,), (0.3081,))
+        elif config.dataset_name == 'CIFAR10':
+            normalize_transform = torchvision_transforms.Normalize(
+                (0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)
+            )
+        else:
+            raise ValueError(f'Unknown dataset {config.dataset_name}')
+
         self.transforms = torchvision_transforms.Compose(
             [
                 torchvision_transforms.ToTensor(),
                 # TODO: Some issues when size changes. Understand why.
                 torchvision_transforms.Resize((config.img_size,), antialias=True),
-                torchvision_transforms.Normalize((0.1307,), (0.3081,)),
+                normalize_transform,
             ]
         )
         self.num_workers = config.num_workers

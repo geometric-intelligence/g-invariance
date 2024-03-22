@@ -60,6 +60,7 @@ class GInvNet(nn.Module):
             kernel_size=config.img_size,
             padding=0,
             bias=False,
+            n_input_channels=config.n_input_channels,
         )
         pooling_output_size = self.pooling_output_size(
             config.pooling, config.n_filters, config.group, config.N
@@ -105,7 +106,7 @@ class GInvNet(nn.Module):
                 left = mid + 1
             else:
                 right = mid
-        return left
+        return left + 1
 
     @staticmethod
     def pooling_output_size(pooling_type, n_filters, group_type, group_size):
