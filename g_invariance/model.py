@@ -9,7 +9,6 @@ from torch import nn
 
 import g_invariance.modules as gtc_modules
 import g_invariance.pooling as gtc_pooling
-import g_invariance.algebra as gtc_algebra
 import math
 
 
@@ -86,8 +85,12 @@ class GInvNet(nn.Module):
     @staticmethod
     def estimate_param_count(pooling_output_size, first_fc, fc_sizes):
         param_count = pooling_output_size * first_fc
+        # batch norm adds 2x output size in FC
+        param_count += first_fc * fc_sizes[0] + 2 * pooling_output_size
         for i in range(0, len(fc_sizes) - 1):
             param_count += fc_sizes[i] * fc_sizes[i + 1]
+        # batch norms
+        param_count += 2 * (fc_sizes[0] + fc_sizes[1])
         return param_count
 
     @staticmethod
@@ -97,10 +100,8 @@ class GInvNet(nn.Module):
         right = target_params_count
         while left < right:
             mid = (left + right) // 2
-            if (
-                GInvNet.estimate_param_count(pooling_output_size, mid, fc_sizes)
-                < target_params_count
-            ):
+            size = GInvNet.estimate_param_count(pooling_output_size, mid, fc_sizes)
+            if size < target_params_count:
                 left = mid + 1
             else:
                 right = mid
