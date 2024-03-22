@@ -10,6 +10,7 @@ progress_bar: true
 # Data
 data_augmentation: 'so2'
 augmentation_factor: 1
+img_size: 16
 
 # Training
 batch_size: 128
@@ -23,7 +24,7 @@ model_name: 'GInvNet'
 # model_name: 'VanillaNet'
 N: 8
 pooling: 'tc'
-group: 'cyclic'
-dataset_name: 'MNIST'
+group: 'dihedral'
+dataset_name: 'EMNIST'
 n_filters: 20
-fc_sizes: [10, 64, 64, 10]
+fc_sizes: [64, 64, 64, 26]

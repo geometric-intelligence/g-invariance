@@ -53,8 +53,8 @@ class MNISTClassifier(pl.LightningModule):
         self.save_hyperparameters()
 
     def on_fit_start(self):
-        wandb_logger = self.loggers[0]
-        wandb_logger.experiment.config['params'] = self.param_count
+        wandb.init(config=self.config)
+        wandb.config.update({'params': self.param_count})
 
     def cross_entropy_loss(self, logits, labels):
         return F.nll_loss(logits, labels)
@@ -103,7 +103,7 @@ class MNISTDataModule(pl.LightningDataModule):
             [
                 torchvision_transforms.ToTensor(),
                 # TODO: Some issues when size changes. Understand why.
-                torchvision_transforms.Resize((16,), antialias=True),
+                torchvision_transforms.Resize((config.img_size,), antialias=True),
                 torchvision_transforms.Normalize((0.1307,), (0.3081,)),
             ]
         )

@@ -95,26 +95,26 @@ def search_pooling():
         fc_sizes = {
             'cyclic': {
                 'MNIST': {
-                    'tc': [10, 64, 64, 10],
-                    'bsp': [40, 64, 64, 10],
-                    'max': [378, 64, 64, 10],
+                    'tc': [64, 64, 64, 10],
+                    'bsp': [64, 64, 64, 10],
+                    'max': [275, 64, 64, 10],
                 },
                 'EMNIST': {
-                    'tc': [10, 64, 64, 26],
-                    'bsp': [40, 64, 64, 26],
-                    'max': [378, 64, 64, 26],
+                    'tc': [64, 64, 64, 26],
+                    'bsp': [64, 64, 64, 26],
+                    'max': [275, 64, 64, 26],
                 },
             },
             'dihedral': {
                 'MNIST': {
-                    'tc': [235, 64, 64, 10],
-                    'bsp': [518, 64, 64, 10],
-                    'max': [2101, 64, 64, 10],
+                    'tc': [64, 64, 64, 10],
+                    'bsp': [500, 64, 64, 10],
+                    'max': [1850, 64, 64, 10],
                 },
                 'EMNIST': {
-                    'tc': [15, 64, 64, 26],
-                    'bsp': [37, 64, 64, 26],
-                    'max': [500, 64, 64, 26],
+                    'tc': [50, 64, 64, 26],
+                    'bsp': [32, 64, 64, 26],
+                    'max': [350, 64, 64, 26],
                 },
             },
         }
@@ -156,7 +156,7 @@ def search_pooling():
             metric='ptl/val_accuracy',
             mode='max',
             # TODO: Infer num samples from search space.
-            num_samples=10,
+            num_samples=1,
             trial_name_creator=trial_str_creator,
         ),
     )
