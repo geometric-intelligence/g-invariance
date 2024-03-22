@@ -67,6 +67,7 @@ def search_pooling():
         scaling_config=scaling_config,
         run_config=run_config,
     )
+
     def spec_to_target_params(spec):
         fc_sizes = {
             'cyclic': {
