@@ -27,10 +27,12 @@ def train_func(config):
         None
     """
     config_param = g_train.read_config_from_file()
-    setup_wandb(config)
     config_param.update(config)
     dm = g_train.MNISTDataModule(config_param)
-    model = g_train.MNISTClassifier(config_param)
+    model = g_train.MNISTClassifier(
+        config_param, wandb_setup_callback=setup_wandb, extra_config=config
+    )
+
     pl.seed_everything(config_param.seed)
     trainer = pl.Trainer(
         devices='auto',
@@ -156,7 +158,7 @@ def search_pooling():
             metric='ptl/val_accuracy',
             mode='max',
             # TODO: Infer num samples from search space.
-            num_samples=1,
+            num_samples=10,
             trial_name_creator=trial_str_creator,
         ),
     )
