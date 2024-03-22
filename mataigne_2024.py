@@ -67,61 +67,19 @@ def search_pooling():
         scaling_config=scaling_config,
         run_config=run_config,
     )
-    # From the paper:
-    #     Table 2. Classification accuracy and parameters count of the different G-CNNs
-    # models with G-TC, full or selective G-bispectrum or Max G-pooling. The experiments
-    # are conducted on the SO(2)/O(2)-MNIST/EMNIST datasets. There are K = 24 filters
-    # for the C8-CNN. For D8-CNN, there are K = 4/20 filters on O(2)-MNIST/EMNIST
-    # respectively. The MLP specifications are detailed in Appendix D.
-    # The different models are matched to have equivalent numbers of parameters.
-    # **size of all MLP layers set to 26.
-
-    # from Figure 4: bruteforce N filters in [2 3 4 5 6 7 8 9 10] and do:
-    # Max G pooling, G-Triple correlation, Selective bi-spectrum.
-
-    # C8 CNN:            SO2-MNIST        SO2-EMNIST
-    # G-TC             # [64,64,64,10]  # [64,64,64,26]
-    # Full G-bispect.  # [20,20,20,10]  # [26,26,26,26]
-    # Sel. G-bispect.  # [64,64,64,10]  # [64,64,64,26]
-    # Max G-pool.      # [275,64,64,10] # [275,64,64,26]
-
-    # D8 CNN             O(2)-MNIST       O(2)-EMNIST
-    # G-TC              # [64,64,64,10]   # [50,64,64,26]
-    # Sel. G-bispect.   # [500,64,64,10]  # [32,64,64,10]
-    # Max G-pool.       # [1850,64,64,10] # [350,64,64,26]
-
-    # Refer to the matainge et al 2024 paper:
-    # Efficient, Complete G-Invariance for G-Equivariant Networks
-    # via Algorithmic Reduction
-    def spec_to_fc_size(spec):
+    def spec_to_target_params(spec):
         fc_sizes = {
             'cyclic': {
-                'MNIST': {
-                    'tc': [64, 64, 64, 10],
-                    'bsp': [64, 64, 64, 10],
-                    'max': [275, 64, 64, 10],
-                },
-                'EMNIST': {
-                    'tc': [64, 64, 64, 26],
-                    'bsp': [64, 64, 64, 26],
-                    'max': [275, 64, 64, 26],
-                },
+                'MNIST': 35000,
+                'EMNIST': 35000,
             },
             'dihedral': {
-                'MNIST': {
-                    'tc': [64, 64, 64, 10],
-                    'bsp': [500, 64, 64, 10],
-                    'max': [1850, 64, 64, 10],
-                },
-                'EMNIST': {
-                    'tc': [50, 64, 64, 26],
-                    'bsp': [32, 64, 64, 26],
-                    'max': [350, 64, 64, 26],
-                },
+                'MNIST': 140000,
+                'EMNIST': 42000,
             },
         }
         config = spec['train_loop_config']
-        return fc_sizes[config['group']][config['dataset_name']][config['pooling']]
+        return fc_sizes[config['group']][config['dataset_name']]
 
     def data_augmentation(spec):
         data_augmentation_map = {'cyclic': 'so2', 'dihedral': 'o2'}
@@ -136,12 +94,19 @@ def search_pooling():
         config = spec['train_loop_config']
         return n_filters_map[config['group']][config['dataset_name']]
 
+    def fc_sizes(spec):
+        fc_sizes_map = {'MNIST': [64, 64, 10], 'EMNIST': [64, 64, 26]}
+        config = spec['train_loop_config']
+        return fc_sizes_map[config['dataset_name']]
+
     search_space = {
         'pooling': tune.grid_search(['bsp', 'tc', 'max']),
         'dataset_name': tune.grid_search(['MNIST', 'EMNIST']),
         'group': tune.grid_search(['cyclic', 'dihedral']),
-        'fc_sizes': tune.sample_from(spec_to_fc_size),
+        'img_size': tune.grid_search([16, 28]),
+        'target_params_count': tune.sample_from(spec_to_target_params),
         'data_augmentation': tune.sample_from(data_augmentation),
+        'fc_sizes': tune.sample_from(fc_sizes),
         'n_filters': tune.sample_from(n_filters),
         'seed': tune.randint(0, MAX_SEED),
     }

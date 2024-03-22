@@ -49,7 +49,7 @@ class MNISTClassifier(pl.LightningModule):
         self.eval_accuracy = []
         self.config = config
         self.param_count = sum(p.numel() for p in self.parameters() if p.requires_grad)
-        extra_config.update({'param_count': self.param_count})
+        # extra_config.update({'param_count': self.param_count})
         if wandb_setup_callback is not None:
             wandb_setup_callback(extra_config)
         self.save_hyperparameters()
