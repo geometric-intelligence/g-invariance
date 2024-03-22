@@ -15,6 +15,7 @@ import g_invariance.train as g_train
 
 MAX_SEED = 65535
 
+
 def train_func(config):
     """
     Trains a PyTorch model using the provided configuration.
@@ -30,7 +31,7 @@ def train_func(config):
     config_param.update(config)
     dm = g_train.MNISTDataModule(config_param)
     model = g_train.MNISTClassifier(config_param)
-
+    pl.seed_everything(config_param.seed)
     trainer = pl.Trainer(
         devices='auto',
         accelerator='auto',
@@ -112,40 +113,13 @@ def search_pooling():
                 },
                 'EMNIST': {
                     'tc': [50, 64, 64, 26],
-                    # TODO: Update the paper, last layer is inconsistent with this.
-                    'bsp': [64, 64, 64, 26],
+                    'bsp': [32, 64, 64, 26],
                     'max': [350, 64, 64, 26],
                 },
             },
         }
         config = spec['train_loop_config']
         return fc_sizes[config['group']][config['dataset_name']][config['pooling']]
-
-    def spec_to_pooling_size(spec):
-        pooling_sizes = {
-            'cyclic': {
-                'MNIST': {'tc': 3264, 'bsp': 768, 'max': 24},
-                'EMNIST': {
-                    'tc': 3264,
-                    'bsp': 768,
-                    'max': 24,
-                },
-            },
-            'dihedral': {
-                'MNIST': {
-                    'tc': 544,
-                    'bsp': 212,
-                    'max': 4,
-                },
-                'EMNIST': {
-                    'tc': 2720,
-                    'bsp': 1060,
-                    'max': 20,
-                },
-            },
-        }
-        config = spec['train_loop_config']
-        return pooling_sizes[config['group']][config['dataset_name']][config['pooling']]
 
     def data_augmentation(spec):
         data_augmentation_map = {'cyclic': 'so2', 'dihedral': 'o2'}
@@ -164,17 +138,16 @@ def search_pooling():
         'pooling': tune.grid_search(['bsp', 'tc', 'max']),
         'dataset_name': tune.grid_search(['MNIST', 'EMNIST']),
         'group': tune.grid_search(['cyclic', 'dihedral']),
-        # The next parameters depend on the previous ones.
-        "fc_sizes": tune.sample_from(spec_to_fc_size),
-        "data_augmentation": tune.sample_from(data_augmentation),
-        "n_filters": tune.sample_from(n_filters),
-        "seed": tune.uniform(0, MAX_SEED),
-        'pooling_output_size': tune.sample_from(spec_to_pooling_size),
+        'fc_sizes': tune.sample_from(spec_to_fc_size),
+        'data_augmentation': tune.sample_from(data_augmentation),
+        'n_filters': tune.sample_from(n_filters),
+        'seed': tune.randint(0, MAX_SEED),
     }
 
     def trial_str_creator(trial):
-        config = trial.config["train_loop_config"]
-        return f"pooling={config['pooling']},ds={config['dataset_name']},group={config['group'],seed={config['seed']}"
+        config = trial.config['train_loop_config']
+        seed = config['seed']
+        return f"pooling={config['pooling']},ds={config['dataset_name']},group={config['group']},seed={seed}"
 
     tuner = tune.Tuner(
         ray_trainer,

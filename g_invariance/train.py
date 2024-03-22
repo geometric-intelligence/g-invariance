@@ -48,6 +48,13 @@ class MNISTClassifier(pl.LightningModule):
         self.eval_loss = []
         self.eval_accuracy = []
         self.config = config
+        self.param_count = sum(p.numel() for p in self.parameters() if p.requires_grad)
+
+        self.save_hyperparameters()
+
+    def on_fit_start(self):
+        wandb.init(config=self.config)
+        wandb.config.update({'params': self.param_count})
 
     def on_fit_start(self):
         total_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
@@ -100,7 +107,7 @@ class MNISTDataModule(pl.LightningDataModule):
             [
                 torchvision_transforms.ToTensor(),
                 # TODO: Some issues when size changes. Understand why.
-                torchvision_transforms.Resize((16,), antialias=True),
+                torchvision_transforms.Resize((config.img_size,), antialias=True),
                 torchvision_transforms.Normalize((0.1307,), (0.3081,)),
             ]
         )

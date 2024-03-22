@@ -220,7 +220,7 @@ class TCGroupPoolingR2Spatial(torch.nn.Module):
 
 
 class BspGroupPooling(GroupPooling):
-    def __init__(self, in_type, group_type='cyclic', idx=None, **kwargs):
+    def __init__(self, in_type, group_type='cyclic', idx=None, n=8, **kwargs):
         """
         group_type should be "cyclic" or "dihedral"
 
@@ -232,7 +232,6 @@ class BspGroupPooling(GroupPooling):
         super().__init__(in_type, **kwargs)
         self.idx = idx
         self.group_type = group_type
-        n = 8
         n2 = int(np.floor((n - 1) / 2))
         n3 = n2
         if n % 2 > 0:
