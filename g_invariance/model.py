@@ -39,6 +39,7 @@ class VanillaNet(nn.Module):
 
 
 class GInvNet(nn.Module):
+
     POOLING_MAP = {
         'bsp': gtc_pooling.BspGroupPooling,
         'tc': gtc_pooling.TCGroupPooling,
