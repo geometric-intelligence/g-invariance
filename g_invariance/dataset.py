@@ -31,7 +31,7 @@ class AugmentedDataset(datasets.VisionDataset):
         self.sampling_method = sampling_method
         train_str = 'train' if train else 'val'
         circle_crop_str = '_circle_crop' if circle_crop else ''
-        filename_suffix = f'{group}_{circle_crop_str}{n_samples}_{sampling_method}_{train_str}.npy'
+        filename_suffix = f'{group}{circle_crop_str}_{n_samples}_{sampling_method}_{train_str}.npy'
         self._data_path = os.path.join(root, f'{dataset_name}_data_{filename_suffix}')
         self._target_path = os.path.join(root, f'{dataset_name}_labels_{filename_suffix}')
         self.group = group

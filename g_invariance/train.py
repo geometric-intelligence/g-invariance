@@ -50,6 +50,7 @@ class MNISTClassifier(pl.LightningModule):
         self.config = config
         self.param_count = sum(p.numel() for p in self.parameters() if p.requires_grad)
         self.save_hyperparameters()
+        self.max_accuracy = 0.0
 
     def on_fit_start(self):
         wandb.init(config=self.config)
@@ -59,6 +60,7 @@ class MNISTClassifier(pl.LightningModule):
         return F.nll_loss(logits, labels)
 
     def forward(self, x):
+        print(x.shape)
         return self.model(x)
 
     def training_step(self, train_batch, batch_idx):
@@ -66,7 +68,9 @@ class MNISTClassifier(pl.LightningModule):
         logits = self.forward(x)
         loss = self.cross_entropy_loss(logits, y)
         accuracy = self.accuracy(logits, y)
-
+        if accuracy > self.max_accuracy:
+            self.max_accuracy = accuracy
+            self.log('ptl/max_accuracy', accuracy)
         self.log('ptl/train_loss', loss)
         self.log('ptl/train_accuracy', accuracy)
         return loss
@@ -90,7 +94,15 @@ class MNISTClassifier(pl.LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        return optimizer
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer, T_0=1, T_mult=self.config.max_epochs, verbose=True
+        )
+
+        return {
+            'optimizer': optimizer,
+            'lr_scheduler': lr_scheduler,
+            'monitor': 'ptl/val_loss',
+        }
 
 
 class MNISTDataModule(pl.LightningDataModule):
@@ -128,6 +140,7 @@ class MNISTDataModule(pl.LightningDataModule):
                     transform=self.transforms,
                     n_samples=self.config.augmentation_factor,
                     dataset_name=self.config.dataset_name,
+                    circle_crop=self.config.circle_crop,
                 )
                 val_count = int(len(dataset) * 0.2)
                 train_count = len(dataset) - val_count
@@ -140,6 +153,7 @@ class MNISTDataModule(pl.LightningDataModule):
                     transform=self.transforms,
                     n_samples=self.config.augmentation_factor,
                     dataset_name=self.config.dataset_name,
+                    circle_crop=self.config.circle_crop,
                 )
 
     def train_dataloader(self):
@@ -178,23 +192,10 @@ if __name__ == '__main__':
 
     model = MNISTClassifier(config)
 
-    checkpoint_callback = pl_callbacks.ModelCheckpoint(
-        monitor='ptl/val_loss',
-        dirpath=config.checkpoint_dir,
-        filename=config.checkpoint_name_pattern,
-        mode='min',
-    )
-
-    early_stopping_callback = pl_callbacks.EarlyStopping(
-        monitor='ptl/val_loss', mode='min', patience=50
-    )
-
     learning_rate_monitor = pl_callbacks.LearningRateMonitor(logging_interval='step')
 
     trainer_callbacks = [
-        checkpoint_callback,
         learning_rate_monitor,
-        early_stopping_callback,
         rich_gi.progress_bar(),
     ]
 
