@@ -9,26 +9,26 @@ progress_bar: true
 
 # Data
 data_augmentation: 'so2'
-augmentation_factor: 1
-img_size: 32
+augmentation_factor: 2
+img_size: 46
 
 # Training
-batch_size: 128
+batch_size: 64
 gpu_count: 1
 num_workers: 8
 lr: 0.001
 max_epochs: 10
 
 # Model specs
-model_name: 'GInvNet'
-# model_name: 'VanillaNet'
-N: 8
+model_name: 'GInvNet' # ConvNet, VanillaNet
+N: 16
 pooling: 'tc'
 group: 'dihedral'
 dataset_name: 'CIFAR10'
 n_input_channels: 3
-n_filters: 20
+n_filters: 64
+circle_crop: true
 # first fc size is auto determined
 # from target param count
-target_params_count: 1000000
+target_params_count: 400000
 fc_sizes: [64, 64, 10]
