@@ -12,8 +12,6 @@ from IPython import embed
 class AugmentedDataset(datasets.VisionDataset):
     """Augmented dataset"""
 
-    MNIST_SIZE = 28
-
     def __init__(
         self,
         root: str,
@@ -24,6 +22,7 @@ class AugmentedDataset(datasets.VisionDataset):
         dataset_name='MNIST',
         group: str = 'so2',
         n_samples: int = 2,
+        circle_crop: bool = False,
     ) -> None:
         super().__init__(root, transform=transform, target_transform=target_transform)
         self.n_samples = n_samples
@@ -31,7 +30,8 @@ class AugmentedDataset(datasets.VisionDataset):
             raise ValueError("sampling_method must be one of ['linspace', 'random']")
         self.sampling_method = sampling_method
         train_str = 'train' if train else 'val'
-        filename_suffix = f'{group}_{n_samples}_{sampling_method}_{train_str}.npy'
+        circle_crop_str = '_circle_crop' if circle_crop else ''
+        filename_suffix = f'{group}_{circle_crop_str}{n_samples}_{sampling_method}_{train_str}.npy'
         self._data_path = os.path.join(root, f'{dataset_name}_data_{filename_suffix}')
         self._target_path = os.path.join(root, f'{dataset_name}_labels_{filename_suffix}')
         self.group = group
@@ -58,15 +58,16 @@ class AugmentedDataset(datasets.VisionDataset):
         for img, label in ds:
             x = np.array(img)
             rotations, flips = self.get_samples()
-            rotated_images = [rotate(x, t, resize=True) for t in rotations]
-            images_to_resize = rotated_images
+            rotated_images = [rotate(x, t, resize=not circle_crop) for t in rotations]
+            images = rotated_images
             if self.group == 'o2':
-                images_to_resize = [np.flip(x) if f else x for f, x in zip(flips, rotated_images)]
-            resized_images = [
-                self.resize_image(img, target_size=target_size) for img in images_to_resize
-            ]
+                images = [np.flip(x) if f else x for f, x in zip(flips, rotated_images)]
+            if not circle_crop:
+                final_images = [self.resize_image(img, target_size=target_size) for img in images]
+            else:
+                final_images = [self.circle_crop(img) for img in images]
 
-            for x in resized_images:
+            for x in final_images:
                 data.append(x)
                 targets.append(label)
 
@@ -81,6 +82,26 @@ class AugmentedDataset(datasets.VisionDataset):
         print(f'Saving data to {self._data_path} and {self._target_path}...')
         np.save(self._data_path, self.data)
         np.save(self._target_path, self.targets)
+
+    @staticmethod
+    def circle_crop(img):
+        # Create a circular mask
+        h, w = img.shape[:2]
+        center = (int(w / 2), int(h / 2))
+        radius = np.min([h, w]) // 2  # Use the smallest dimension for the radius
+
+        Y, X = np.ogrid[:h, :w]
+        dist_from_center = np.sqrt((X - center[0]) ** 2 + (Y - center[1]) ** 2)
+        mask = dist_from_center <= radius
+
+        # Apply mask
+        cropped_img = np.zeros_like(img)
+        if img.ndim == 3:
+            for i in range(3):
+                cropped_img[:, :, i] = img[:, :, i] * mask
+        else:
+            cropped_img[:, :] = img[:, :] * mask
+        return cropped_img
 
     @staticmethod
     def resize_image(img, target_size):
@@ -110,6 +131,7 @@ class AugmentedDataset(datasets.VisionDataset):
             pad = ((pad_top, pad_bottom), (pad_left, pad_right)) + ((0, 0),) * (img.ndim - 2)
         # Apply padding
         padded_tensor = np.pad(img, pad_width=pad, mode='constant', constant_values=0)
+
         return padded_tensor
 
     def get_samples(self):
