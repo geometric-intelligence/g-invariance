@@ -92,9 +92,7 @@ class GInvNet(nn.Module):
         self.model = self.model = torch.nn.Sequential(
             conv_block,
             self.POOLING_MAP[config.pooling](
-                idx=None,
-                group_type=config.group,
-                in_type=conv_block.out_type,
+                idx=None, group_type=config.group, in_type=conv_block.out_type, n=config.N
             ),
             gtc_modules.GTtoT(),
             gtc_modules.Ravel(),
