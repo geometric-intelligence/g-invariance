@@ -251,7 +251,7 @@ class BspGroupPooling(GroupPooling):
         Return: DFT of f, fhat:Z/nZ->C.
         """
         device = f.device
-        return torch.conj(torch.fft.fft(f, dim=2)).to(device)
+        return torch.fft.fft(f, dim=2).to(device)
 
     def fourier_transform_vectorized_batch_dihedral(self, f):
         """
@@ -283,7 +283,7 @@ class BspGroupPooling(GroupPooling):
         omega = 2 * torch.pi * i_range[:, None] * j_range / n
         # Create rho tensor of rotation matrices.
         rho = torch.concat(
-            (torch.cos(omega), -torch.sin(omega), torch.sin(omega), torch.cos(omega))
+            (torch.cos(omega), torch.sin(omega), -torch.sin(omega), torch.cos(omega))
         )
         rho = einops.rearrange(rho, '(c1 c2 w) h  -> c1 c2 w h', c1=2, c2=2).to(device)
         rho1 = rho.clone()
