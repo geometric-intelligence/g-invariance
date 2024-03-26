@@ -72,12 +72,12 @@ def search_pooling():
             'cyclic': {
                 'MNIST': 40000,
                 'EMNIST': 40000,
-                'CIFAR10': 1000000,
+                'CIFAR10': 500000,
             },
             'dihedral': {
                 'MNIST': 140000,
                 'EMNIST': 40000,
-                'CIFAR10': 1000000,
+                'CIFAR10': 500000,
             },
         }
         config = spec['train_loop_config']
@@ -90,14 +90,18 @@ def search_pooling():
 
     def n_filters(spec):
         n_filters_map = {
-            'cyclic': {'MNIST': 24, 'EMNIST': 24, 'CIFAR10': 64},
-            'dihedral': {'MNIST': 4, 'EMNIST': 20, 'CIFAR10': 64},
+            'cyclic': {'MNIST': 24, 'EMNIST': 24, 'CIFAR10': 32},
+            'dihedral': {'MNIST': 4, 'EMNIST': 20, 'CIFAR10': 32},
         }
         config = spec['train_loop_config']
         return n_filters_map[config['group']][config['dataset_name']]
 
     def fc_sizes(spec):
-        fc_sizes_map = {'MNIST': [64, 64, 10], 'EMNIST': [64, 64, 26], 'CIFAR10': [128, 64, 10]}
+        fc_sizes_map = {
+            'MNIST': [64, 64, 10],
+            'EMNIST': [64, 64, 26],
+            'CIFAR10': [128, 64, 10],
+        }
         config = spec['train_loop_config']
         return fc_sizes_map[config['dataset_name']]
 

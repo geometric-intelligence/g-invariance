@@ -37,6 +37,26 @@ class VanillaNet(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
+class ConvNet(nn.Module):
+    def __init__(self, config):
+        super().__init__()
+        self.conv1 = nn.Conv2d(3, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(1024, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = torch.flatten(x, 1)  # flatten all dimensions except batch
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return F.log_softmax(x, dim=1)
+
+
 class GInvNet(nn.Module):
     POOLING_MAP = {
         'bsp': gtc_pooling.BspGroupPooling,
@@ -68,6 +88,7 @@ class GInvNet(nn.Module):
         first_fc_size = self.get_best_fc_size(
             pooling_output_size, config.fc_sizes, config.target_params_count
         )
+
         self.model = self.model = torch.nn.Sequential(
             conv_block,
             self.POOLING_MAP[config.pooling](
@@ -80,6 +101,7 @@ class GInvNet(nn.Module):
             gtc_modules.FullyConnectedBlock(in_dim=pooling_output_size, out_dim=first_fc_size),
             gtc_modules.FullyConnectedBlock(in_dim=first_fc_size, out_dim=config.fc_sizes[0]),
             gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]),
+            nn.Dropout(p=0.2),
             gtc_modules.Linear(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
         )
 
