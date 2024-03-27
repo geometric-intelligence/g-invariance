@@ -62,6 +62,7 @@ class GInvNet(nn.Module):
         'bsp': gtc_pooling.BspGroupPooling,
         'tc': gtc_pooling.TCGroupPooling,
         'max': gtc_pooling.GroupPooling,
+        'avg': gtc_pooling.AvgGroupPooling,
     }
 
     def __init__(self, config):
@@ -82,24 +83,30 @@ class GInvNet(nn.Module):
             bias=False,
             n_input_channels=config.n_input_channels,
         )
-        pooling_output_size = self.pooling_output_size(
+        self.pooling_output_size = self.pooling_output_size(
             config.pooling, config.n_filters, config.group, config.N
         )
-        first_fc_size = self.get_best_fc_size(
-            pooling_output_size, config.fc_sizes, config.target_params_count
+        self.first_fc_size = self.get_best_fc_size(
+            self.pooling_output_size, config.fc_sizes, config.target_params_count
         )
-
+        # If average or max pooling, the parameter is passed to the group
+        pooling_block = self.POOLING_MAP[config.pooling](
+            idx=None,
+            group_type=config.group,
+            pooling_type=config.pooling,
+            in_type=conv_block.out_type,
+            n=config.N,
+        )
         self.model = self.model = torch.nn.Sequential(
             conv_block,
-            self.POOLING_MAP[config.pooling](
-                idx=None, group_type=config.group, in_type=conv_block.out_type, n=config.N
-            ),
+            pooling_block,
             gtc_modules.GTtoT(),
             gtc_modules.Ravel(),
-            gtc_modules.FullyConnectedBlock(in_dim=pooling_output_size, out_dim=first_fc_size),
-            gtc_modules.FullyConnectedBlock(in_dim=first_fc_size, out_dim=config.fc_sizes[0]),
+            gtc_modules.FullyConnectedBlock(
+                in_dim=self.pooling_output_size, out_dim=self.first_fc_size
+            ),
+            gtc_modules.FullyConnectedBlock(in_dim=self.first_fc_size, out_dim=config.fc_sizes[0]),
             gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]),
-            nn.Dropout(p=0.2),
             gtc_modules.Linear(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
         )
 
@@ -130,7 +137,7 @@ class GInvNet(nn.Module):
 
     @staticmethod
     def pooling_output_size(pooling_type, n_filters, group_type, group_size):
-        if pooling_type == 'max':
+        if pooling_type in ['max', 'avg']:
             return n_filters
         elif pooling_type == 'bsp':
             if group_type == 'cyclic':

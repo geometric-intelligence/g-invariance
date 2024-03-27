@@ -1,5 +1,5 @@
 # Misc and system settings
-name: "g-invariance"
+name: "g-invariance-test"
 dataset_dir: "/tmp/datasets/"
 seed: 42
 checkpoint_dir: "checkpoints/"
@@ -23,7 +23,7 @@ max_epochs: 15
 model_name: "GInvNet" # ConvNet, VanillaNet
 # dimension is currently hardcoded in BSP
 N: 8
-pooling: "bsp"
+pooling: "avg"
 group: "cyclic"
 dataset_name: "MNIST"
 n_input_channels: 1
@@ -32,4 +32,4 @@ circle_crop: true
 # first fc size is auto determined
 # from target param count
 target_params_count: 400000
-fc_sizes: [128, 64, 10]
+fc_sizes: [64, 64, 10]
