@@ -60,7 +60,6 @@ class MNISTClassifier(pl.LightningModule):
         return F.nll_loss(logits, labels)
 
     def forward(self, x):
-        print(x.shape)
         return self.model(x)
 
     def training_step(self, train_batch, batch_idx):
@@ -68,11 +67,8 @@ class MNISTClassifier(pl.LightningModule):
         logits = self.forward(x)
         loss = self.cross_entropy_loss(logits, y)
         accuracy = self.accuracy(logits, y)
-        if accuracy > self.max_accuracy:
-            self.max_accuracy = accuracy
-            self.log('ptl/max_accuracy', accuracy)
-        self.log('ptl/train_loss', loss)
-        self.log('ptl/train_accuracy', accuracy)
+        self.log('train_loss', loss)
+        self.log('train_accuracy', accuracy)
         return loss
 
     def validation_step(self, val_batch, batch_idx):
@@ -89,6 +85,12 @@ class MNISTClassifier(pl.LightningModule):
         avg_acc = torch.stack(self.eval_accuracy).mean()
         self.log('ptl/val_loss', avg_loss, sync_dist=True)
         self.log('ptl/val_accuracy', avg_acc, sync_dist=True)
+        self.log('param_count', self.param_count)
+        self.log('pooling_output_size', self.model.pooling_output_size)
+        self.log('first_layer_size', self.model.first_fc_size)
+        if avg_acc > self.max_accuracy:
+            self.max_accuracy = avg_acc
+            self.log('ptl/max_val_accuracy', avg_acc, sync_dist=True)
         self.eval_loss.clear()
         self.eval_accuracy.clear()
 
@@ -211,5 +213,5 @@ if __name__ == '__main__':
         callbacks=trainer_callbacks,
         logger=logger,
     )
-
+    input = torch.randn(1, config.img_size, config.img_size)
     trainer.fit(model, datamodule=dm)
