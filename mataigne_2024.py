@@ -52,7 +52,7 @@ def search_pooling():
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project='g-invariance')],
+        callbacks=[WandbLoggerCallback(project='g-invariance-search-pooling')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
             checkpoint_score_attribute='ptl/val_accuracy',
@@ -245,7 +245,7 @@ def search_group_size():
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project='g-invariance-test')],
+        callbacks=[WandbLoggerCallback(project='g-invariance-groups')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
             checkpoint_score_attribute='ptl/val_accuracy',
@@ -336,5 +336,9 @@ def search_group_size():
 
 
 if __name__ == '__main__':
+    results = search_pooling()
+    results.get_dataframe().to_csv('ray_results_seach_pooling.csv')
+    results = search_filters()
+    results.get_dataframe().to_csv('ray_results_filters.csv')
     results = search_group_size()
-    results.get_dataframe().to_csv('ray_results_group.csv')
+    results.get_dataframe().to_csv('ray_results_group_size.csv')
