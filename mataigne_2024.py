@@ -34,8 +34,8 @@ def train_func(config):
 
     pl.seed_everything(config_param.seed)
     trainer = pl.Trainer(
-        devices="auto",
-        accelerator="auto",
+        devices='auto',
+        accelerator='auto',
         strategy=ray_lightning.RayDDPStrategy(),
         callbacks=[ray_lightning.RayTrainReportCallback()],
         plugins=[ray_lightning.RayLightningEnvironment()],
@@ -48,15 +48,15 @@ def train_func(config):
 
 def search_pooling():
     scaling_config = ScalingConfig(
-        num_workers=1, use_gpu=True, resources_per_worker={"CPU": 3, "GPU": 1}
+        num_workers=1, use_gpu=True, resources_per_worker={'CPU': 3, 'GPU': 1}
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project="g-invariance-search-pooling")],
+        callbacks=[WandbLoggerCallback(project='g-invariance-search-pooling')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
-            checkpoint_score_attribute="ptl/val_accuracy",
-            checkpoint_score_order="max",
+            checkpoint_score_attribute='ptl/val_accuracy',
+            checkpoint_score_order='max',
         ),
     )
 
@@ -69,71 +69,71 @@ def search_pooling():
 
     def spec_to_target_params(spec):
         fc_sizes = {
-            "cyclic": {
-                "MNIST": 40000,
-                "EMNIST": 40000,
-                "CIFAR10": 500000,
+            'cyclic': {
+                'MNIST': 40000,
+                'EMNIST': 40000,
+                'CIFAR10': 500000,
             },
-            "dihedral": {
-                "MNIST": 140000,
-                "EMNIST": 40000,
-                "CIFAR10": 500000,
+            'dihedral': {
+                'MNIST': 140000,
+                'EMNIST': 40000,
+                'CIFAR10': 500000,
             },
         }
-        config = spec["train_loop_config"]
-        return fc_sizes[config["group"]][config["dataset_name"]]
+        config = spec['train_loop_config']
+        return fc_sizes[config['group']][config['dataset_name']]
 
     def data_augmentation(spec):
-        data_augmentation_map = {"cyclic": "so2", "dihedral": "o2"}
-        config = spec["train_loop_config"]
-        return data_augmentation_map[config["group"]]
+        data_augmentation_map = {'cyclic': 'so2', 'dihedral': 'o2'}
+        config = spec['train_loop_config']
+        return data_augmentation_map[config['group']]
 
     def n_filters(spec):
         n_filters_map = {
-            "cyclic": {"MNIST": 24, "EMNIST": 24, "CIFAR10": 32},
-            "dihedral": {"MNIST": 4, "EMNIST": 20, "CIFAR10": 32},
+            'cyclic': {'MNIST': 24, 'EMNIST': 24, 'CIFAR10': 32},
+            'dihedral': {'MNIST': 4, 'EMNIST': 20, 'CIFAR10': 32},
         }
-        config = spec["train_loop_config"]
-        return n_filters_map[config["group"]][config["dataset_name"]]
+        config = spec['train_loop_config']
+        return n_filters_map[config['group']][config['dataset_name']]
 
     def fc_sizes(spec):
         fc_sizes_map = {
-            "MNIST": [64, 64, 10],
-            "EMNIST": [64, 64, 26],
-            "CIFAR10": [128, 64, 10],
+            'MNIST': [64, 64, 10],
+            'EMNIST': [64, 64, 26],
+            'CIFAR10': [128, 64, 10],
         }
-        config = spec["train_loop_config"]
-        return fc_sizes_map[config["dataset_name"]]
+        config = spec['train_loop_config']
+        return fc_sizes_map[config['dataset_name']]
 
     def n_input_channels(spec):
-        n_input_channels_map = {"MNIST": 1, "EMNIST": 1, "CIFAR10": 3}
-        config = spec["train_loop_config"]
-        return n_input_channels_map[config["dataset_name"]]
+        n_input_channels_map = {'MNIST': 1, 'EMNIST': 1, 'CIFAR10': 3}
+        config = spec['train_loop_config']
+        return n_input_channels_map[config['dataset_name']]
 
     search_space = {
-        "pooling": tune.grid_search(["bsp", "tc", "max", "avg"]),
-        "dataset_name": tune.grid_search(["MNIST", "EMNIST", "CIFAR10"]),
-        "group": tune.grid_search(["cyclic", "dihedral"]),
-        "img_size": tune.grid_search([16, 28, 45]),
-        "target_params_count": tune.sample_from(spec_to_target_params),
-        "data_augmentation": tune.sample_from(data_augmentation),
-        "fc_sizes": tune.sample_from(fc_sizes),
-        "n_filters": tune.sample_from(n_filters),
-        "seed": tune.randint(0, MAX_SEED),
-        "n_input_channels": tune.sample_from(n_input_channels),
+        'pooling': tune.grid_search(['bsp', 'tc', 'max', 'avg']),
+        'dataset_name': tune.grid_search(['MNIST', 'EMNIST', 'CIFAR10']),
+        'group': tune.grid_search(['cyclic', 'dihedral']),
+        'img_size': tune.grid_search([16, 28, 45]),
+        'target_params_count': tune.sample_from(spec_to_target_params),
+        'data_augmentation': tune.sample_from(data_augmentation),
+        'fc_sizes': tune.sample_from(fc_sizes),
+        'n_filters': tune.sample_from(n_filters),
+        'seed': tune.randint(0, MAX_SEED),
+        'n_input_channels': tune.sample_from(n_input_channels),
     }
 
     def trial_str_creator(trial):
-        config = trial.config["train_loop_config"]
-        seed = config["seed"]
+        config = trial.config['train_loop_config']
+        seed = config['seed']
         return f"pooling={config['pooling']},ds={config['dataset_name']},group={config['group']},seed={seed}"
 
     tuner = tune.Tuner(
         ray_trainer,
-        param_space={"train_loop_config": search_space},
+        param_space={'train_loop_config': search_space},
         tune_config=tune.TuneConfig(
-            metric="ptl/val_accuracy",
-            mode="max",
+            metric='ptl/val_accuracy',
+            mode='max',
             # TODO: Infer num samples from search space.
             num_samples=10,
             trial_name_creator=trial_str_creator,
@@ -144,15 +144,15 @@ def search_pooling():
 
 def search_filters():
     scaling_config = ScalingConfig(
-        num_workers=1, use_gpu=True, resources_per_worker={"CPU": 3, "GPU": 1}
+        num_workers=1, use_gpu=True, resources_per_worker={'CPU': 3, 'GPU': 1}
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project="g-invariance-filters")],
+        callbacks=[WandbLoggerCallback(project='g-invariance-filters')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
-            checkpoint_score_attribute="ptl/val_accuracy",
-            checkpoint_score_order="max",
+            checkpoint_score_attribute='ptl/val_accuracy',
+            checkpoint_score_order='max',
         ),
     )
 
@@ -165,72 +165,72 @@ def search_filters():
 
     def spec_to_target_params(spec):
         fc_sizes = {
-            "cyclic": {
-                "MNIST": 40000,
-                "EMNIST": 40000,
-                "CIFAR10": 500000,
+            'cyclic': {
+                'MNIST': 40000,
+                'EMNIST': 40000,
+                'CIFAR10': 500000,
             },
-            "dihedral": {
-                "MNIST": 140000,
-                "EMNIST": 40000,
-                "CIFAR10": 500000,
+            'dihedral': {
+                'MNIST': 140000,
+                'EMNIST': 40000,
+                'CIFAR10': 500000,
             },
         }
-        config = spec["train_loop_config"]
-        return fc_sizes[config["group"]][config["dataset_name"]]
+        config = spec['train_loop_config']
+        return fc_sizes[config['group']][config['dataset_name']]
 
     def data_augmentation(spec):
-        data_augmentation_map = {"cyclic": "so2", "dihedral": "o2"}
-        config = spec["train_loop_config"]
-        return data_augmentation_map[config["group"]]
+        data_augmentation_map = {'cyclic': 'so2', 'dihedral': 'o2'}
+        config = spec['train_loop_config']
+        return data_augmentation_map[config['group']]
 
     def n_filters(spec):
         n_filters_map = {
-            "cyclic": {"MNIST": 24},
-            "dihedral": {"MNIST": 4},
+            'cyclic': {'MNIST': 24},
+            'dihedral': {'MNIST': 4},
         }
-        config = spec["train_loop_config"]
-        return n_filters_map[config["group"]][config["dataset_name"]]
+        config = spec['train_loop_config']
+        return n_filters_map[config['group']][config['dataset_name']]
 
     def fc_sizes(spec):
         fc_sizes_map = {
-            "MNIST": [64, 64, 10],
+            'MNIST': [64, 64, 10],
         }
-        config = spec["train_loop_config"]
-        return fc_sizes_map[config["dataset_name"]]
+        config = spec['train_loop_config']
+        return fc_sizes_map[config['dataset_name']]
 
     def n_input_channels(spec):
-        n_input_channels_map = {"MNIST": 1, "EMNIST": 1, "CIFAR10": 3}
-        config = spec["train_loop_config"]
-        return n_input_channels_map[config["dataset_name"]]
+        n_input_channels_map = {'MNIST': 1, 'EMNIST': 1, 'CIFAR10': 3}
+        config = spec['train_loop_config']
+        return n_input_channels_map[config['dataset_name']]
 
     search_space = {
-        "pooling": tune.grid_search(["bsp", "tc", "max", "avg"]),
-        "dataset_name": tune.grid_search(["MNIST"]),
-        "group": tune.grid_search(["cyclic", "dihedral"]),
-        "img_size": tune.grid_search([28]),
-        "target_params_count": tune.sample_from(spec_to_target_params),
-        "data_augmentation": tune.sample_from(data_augmentation),
-        "fc_sizes": tune.sample_from(fc_sizes),
+        'pooling': tune.grid_search(['bsp', 'tc', 'max', 'avg']),
+        'dataset_name': tune.grid_search(['MNIST']),
+        'group': tune.grid_search(['cyclic', 'dihedral']),
+        'img_size': tune.grid_search([28]),
+        'target_params_count': tune.sample_from(spec_to_target_params),
+        'data_augmentation': tune.sample_from(data_augmentation),
+        'fc_sizes': tune.sample_from(fc_sizes),
         # TODO: Issue when initializing n_filters to 1
-        "n_filters": tune.grid_search(
+        'n_filters': tune.grid_search(
             [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
         ),
-        "seed": tune.randint(0, MAX_SEED),
-        "n_input_channels": tune.sample_from(n_input_channels),
+        'seed': tune.randint(0, MAX_SEED),
+        'n_input_channels': tune.sample_from(n_input_channels),
     }
 
     def trial_str_creator(trial):
-        config = trial.config["train_loop_config"]
-        seed = config["seed"]
+        config = trial.config['train_loop_config']
+        seed = config['seed']
         return f"pooling={config['pooling']},ds={config['dataset_name']},group={config['group']},seed={seed}"
 
     tuner = tune.Tuner(
         ray_trainer,
-        param_space={"train_loop_config": search_space},
+        param_space={'train_loop_config': search_space},
         tune_config=tune.TuneConfig(
-            metric="ptl/val_accuracy",
-            mode="max",
+            metric='ptl/val_accuracy',
+            mode='max',
             # TODO: Infer num samples from search space.
             num_samples=10,
             trial_name_creator=trial_str_creator,
@@ -241,15 +241,15 @@ def search_filters():
 
 def search_group_size():
     scaling_config = ScalingConfig(
-        num_workers=1, use_gpu=True, resources_per_worker={"CPU": 3, "GPU": 1}
+        num_workers=1, use_gpu=True, resources_per_worker={'CPU': 3, 'GPU': 1}
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project="g-invariance-groups")],
+        callbacks=[WandbLoggerCallback(project='g-invariance-groups')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
-            checkpoint_score_attribute="ptl/val_accuracy",
-            checkpoint_score_order="max",
+            checkpoint_score_attribute='ptl/val_accuracy',
+            checkpoint_score_order='max',
         ),
     )
 
@@ -262,71 +262,71 @@ def search_group_size():
 
     def spec_to_target_params(spec):
         target_params = {
-            "cyclic": {
-                "MNIST": 40000,
-                "EMNIST": 40000,
-                "CIFAR10": 500000,
+            'cyclic': {
+                'MNIST': 40000,
+                'EMNIST': 40000,
+                'CIFAR10': 500000,
             },
-            "dihedral": {
-                "MNIST": 140000,
-                "EMNIST": 40000,
-                "CIFAR10": 500000,
+            'dihedral': {
+                'MNIST': 140000,
+                'EMNIST': 40000,
+                'CIFAR10': 500000,
             },
         }
-        config = spec["train_loop_config"]
-        return target_params[config["group"]][config["dataset_name"]]
+        config = spec['train_loop_config']
+        return target_params[config['group']][config['dataset_name']]
 
     def data_augmentation(spec):
-        data_augmentation_map = {"cyclic": "so2", "dihedral": "o2"}
-        config = spec["train_loop_config"]
-        return data_augmentation_map[config["group"]]
+        data_augmentation_map = {'cyclic': 'so2', 'dihedral': 'o2'}
+        config = spec['train_loop_config']
+        return data_augmentation_map[config['group']]
 
     def n_filters(spec):
         n_filters_map = {
-            "cyclic": {"MNIST": 24},
-            "dihedral": {"MNIST": 4},
+            'cyclic': {'MNIST': 24},
+            'dihedral': {'MNIST': 4},
         }
-        config = spec["train_loop_config"]
-        return n_filters_map[config["group"]][config["dataset_name"]]
+        config = spec['train_loop_config']
+        return n_filters_map[config['group']][config['dataset_name']]
 
     def fc_sizes(spec):
         fc_sizes_map = {
-            "MNIST": [64, 64, 10],
+            'MNIST': [64, 64, 10],
         }
-        config = spec["train_loop_config"]
-        return fc_sizes_map[config["dataset_name"]]
+        config = spec['train_loop_config']
+        return fc_sizes_map[config['dataset_name']]
 
     def n_input_channels(spec):
-        n_input_channels_map = {"MNIST": 1, "EMNIST": 1, "CIFAR10": 3}
-        config = spec["train_loop_config"]
-        return n_input_channels_map[config["dataset_name"]]
+        n_input_channels_map = {'MNIST': 1, 'EMNIST': 1, 'CIFAR10': 3}
+        config = spec['train_loop_config']
+        return n_input_channels_map[config['dataset_name']]
 
     search_space = {
-        "pooling": tune.grid_search(["bsp", "tc", "max", "avg"]),
-        "dataset_name": tune.grid_search(["MNIST"]),
-        "group": tune.grid_search(["cyclic", "dihedral"]),
-        "img_size": tune.grid_search([28]),
-        "target_params_count": tune.sample_from(spec_to_target_params),
-        "data_augmentation": tune.sample_from(data_augmentation),
-        "fc_sizes": tune.sample_from(fc_sizes),
+        'pooling': tune.grid_search(['bsp', 'tc', 'max', 'avg']),
+        'dataset_name': tune.grid_search(['MNIST']),
+        'group': tune.grid_search(['cyclic', 'dihedral']),
+        'img_size': tune.grid_search([28]),
+        'target_params_count': tune.sample_from(spec_to_target_params),
+        'data_augmentation': tune.sample_from(data_augmentation),
+        'fc_sizes': tune.sample_from(fc_sizes),
         # TODO: Issue when initializing n_filters to 1
-        "N": tune.grid_search([4, 8, 16, 32, 64, 128]),
-        "n_filters": tune.sample_from(n_filters),
-        "seed": tune.randint(0, MAX_SEED),
-        "n_input_channels": tune.sample_from(n_input_channels),
+        'N': tune.grid_search([4, 8, 16, 32, 64, 128]),
+        'n_filters': tune.sample_from(n_filters),
+        'seed': tune.randint(0, MAX_SEED),
+        'n_input_channels': tune.sample_from(n_input_channels),
     }
 
     def trial_str_creator(trial):
-        config = trial.config["train_loop_config"]
-        seed = config["seed"]
+        config = trial.config['train_loop_config']
+        seed = config['seed']
         return f"pooling={config['pooling']},ds={config['dataset_name']},group={config['group']},seed={seed}"
 
     tuner = tune.Tuner(
         ray_trainer,
-        param_space={"train_loop_config": search_space},
+        param_space={'train_loop_config': search_space},
         tune_config=tune.TuneConfig(
-            metric="ptl/val_accuracy",
-            mode="max",
+            metric='ptl/val_accuracy',
+            mode='max',
             # TODO: Infer num samples from search space.
             num_samples=10,
             trial_name_creator=trial_str_creator,
@@ -335,10 +335,10 @@ def search_group_size():
     return tuner.fit()
 
 
-if __name__ == "__main__":
-    # results = search_pooling()
-    # results.get_dataframe().to_csv('ray_results_seach_pooling.csv')
+if __name__ == '__main__':
+    results = search_pooling()
+    results.get_dataframe().to_csv('ray_results_seach_pooling.csv')
     results = search_filters()
-    results.get_dataframe().to_csv("ray_results_filters.csv")
+    results.get_dataframe().to_csv('ray_results_filters.csv')
     results = search_group_size()
-    results.get_dataframe().to_csv("ray_results_group_size.csv")
+    results.get_dataframe().to_csv('ray_results_group_size.csv')
