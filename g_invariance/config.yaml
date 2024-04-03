@@ -9,14 +9,14 @@ progress_bar: true
 
 # Data
 data_augmentation: "so2"
-augmentation_factor: 1
+augmentation_factor: 2
 img_size: 16
 
 # Training
 batch_size: 128
 gpu_count: 1
 num_workers: 8
-lr: 0.001
+lr: 0.0005
 max_epochs: 15
 
 # Model specs
@@ -26,6 +26,7 @@ N: 8
 pooling: "avg"
 group: "cyclic"
 dataset_name: "MNIST"
+dropout: 0.2
 n_input_channels: 1
 n_filters: 2
 circle_crop: true

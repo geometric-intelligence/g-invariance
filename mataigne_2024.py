@@ -52,7 +52,9 @@ def search_pooling():
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project='g-invariance-search-pooling')],
+        callbacks=[
+            WandbLoggerCallback(project='g-invariance-search-cifar10-dropout-aug2-32-size-32')
+        ],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
             checkpoint_score_attribute='ptl/val_accuracy',
@@ -72,12 +74,12 @@ def search_pooling():
             'cyclic': {
                 'MNIST': 40000,
                 'EMNIST': 40000,
-                'CIFAR10': 500000,
+                'CIFAR10': 1000000,
             },
             'dihedral': {
                 'MNIST': 140000,
                 'EMNIST': 40000,
-                'CIFAR10': 500000,
+                'CIFAR10': 1000000,
             },
         }
         config = spec['train_loop_config']
@@ -90,8 +92,8 @@ def search_pooling():
 
     def n_filters(spec):
         n_filters_map = {
-            'cyclic': {'MNIST': 24, 'EMNIST': 24, 'CIFAR10': 32},
-            'dihedral': {'MNIST': 4, 'EMNIST': 20, 'CIFAR10': 32},
+            'cyclic': {'MNIST': 24, 'EMNIST': 24, 'CIFAR10': 20},
+            'dihedral': {'MNIST': 4, 'EMNIST': 20, 'CIFAR10': 20},
         }
         config = spec['train_loop_config']
         return n_filters_map[config['group']][config['dataset_name']]
@@ -112,9 +114,9 @@ def search_pooling():
 
     search_space = {
         'pooling': tune.grid_search(['bsp', 'tc', 'max', 'avg']),
-        'dataset_name': tune.grid_search(['MNIST', 'EMNIST', 'CIFAR10']),
+        'dataset_name': tune.grid_search(['CIFAR10']),
         'group': tune.grid_search(['cyclic', 'dihedral']),
-        'img_size': tune.grid_search([16, 28, 45]),
+        'img_size': tune.grid_search([32]),
         'target_params_count': tune.sample_from(spec_to_target_params),
         'data_augmentation': tune.sample_from(data_augmentation),
         'fc_sizes': tune.sample_from(fc_sizes),
@@ -338,7 +340,7 @@ def search_group_size():
 if __name__ == '__main__':
     results = search_pooling()
     results.get_dataframe().to_csv('ray_results_seach_pooling.csv')
-    results = search_filters()
-    results.get_dataframe().to_csv('ray_results_filters.csv')
-    results = search_group_size()
-    results.get_dataframe().to_csv('ray_results_group_size.csv')
+    # results = search_filters()
+    # results.get_dataframe().to_csv('ray_results_filters.csv')
+    # results = search_group_size()
+    # results.get_dataframe().to_csv('ray_results_group_size.csv')

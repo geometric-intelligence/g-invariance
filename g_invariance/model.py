@@ -107,6 +107,7 @@ class GInvNet(nn.Module):
             ),
             gtc_modules.FullyConnectedBlock(in_dim=self.first_fc_size, out_dim=config.fc_sizes[0]),
             gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]),
+            nn.Dropout(p=config.dropout),
             gtc_modules.Linear(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
         )
 
