@@ -16,12 +16,12 @@ from torchvision import transforms as torchvision_transforms
 import g_invariance.dataset as g_dataset
 from g_invariance import model, rich_gi
 
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.yaml')
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
 
 
 class Config(pydantic.BaseModel):
     class Config:
-        extra = 'allow'
+        extra = "allow"
 
     def __getitem__(self, item):
         return getattr(self, item)
@@ -34,16 +34,18 @@ class Config(pydantic.BaseModel):
 def read_config_from_file(path: str = CONFIG_FILE) -> Config:
     if not os.path.exists(path):
         raise FileNotFoundError(path)
-    with open(path, 'r') as _:
+    with open(path, "r") as _:
         obj = yaml.safe_load(_.read())
         return Config.parse_obj(obj)
 
 
-class MNISTClassifier(pl.LightningModule):
+class Classifier(pl.LightningModule):
     def __init__(self, config, wandb_setup_callback=None, extra_config=None):
-        super(MNISTClassifier, self).__init__()
-        self.accuracy = Accuracy(task='multiclass', num_classes=config.fc_sizes[-1], top_k=1)
-        self.lr = config['lr']
+        super(Classifier, self).__init__()
+        self.accuracy = Accuracy(
+            task="multiclass", num_classes=config.fc_sizes[-1], top_k=1
+        )
+        self.lr = config["lr"]
         self.model = getattr(model, config.model_name)(config)
         self.eval_loss = []
         self.eval_accuracy = []
@@ -54,7 +56,7 @@ class MNISTClassifier(pl.LightningModule):
 
     def on_fit_start(self):
         wandb.init(config=self.config)
-        wandb.config.update({'params': self.param_count})
+        wandb.config.update({"params": self.param_count})
 
     def cross_entropy_loss(self, logits, labels):
         return F.nll_loss(logits, labels)
@@ -67,8 +69,8 @@ class MNISTClassifier(pl.LightningModule):
         logits = self.forward(x)
         loss = self.cross_entropy_loss(logits, y)
         accuracy = self.accuracy(logits, y)
-        self.log('train_loss', loss)
-        self.log('train_accuracy', accuracy)
+        self.log("train_loss", loss, sync_dist=True)
+        self.log("train_accuracy", accuracy, sync_dist=True)
         return loss
 
     def validation_step(self, val_batch, batch_idx):
@@ -78,19 +80,19 @@ class MNISTClassifier(pl.LightningModule):
         accuracy = self.accuracy(logits, y)
         self.eval_loss.append(loss)
         self.eval_accuracy.append(accuracy)
-        return {'val_loss': loss, 'val_accuracy': accuracy}
+        return {"val_loss": loss, "val_accuracy": accuracy}
 
     def on_validation_epoch_end(self):
         avg_loss = torch.stack(self.eval_loss).mean()
         avg_acc = torch.stack(self.eval_accuracy).mean()
-        self.log('ptl/val_loss', avg_loss, sync_dist=True)
-        self.log('ptl/val_accuracy', avg_acc, sync_dist=True)
-        self.log('param_count', self.param_count)
-        self.log('pooling_output_size', self.model.pooling_output_size)
-        self.log('first_layer_size', self.model.first_fc_size)
+        self.log("ptl/val_loss", avg_loss, sync_dist=True)
+        self.log("ptl/val_accuracy", avg_acc, sync_dist=True)
+        self.log("param_count", self.param_count)
+        # self.log("pooling_output_size", self.model.pooling_output_size)
+        # self.log("first_layer_size", self.model.first_fc_size)
         if avg_acc > self.max_accuracy:
             self.max_accuracy = avg_acc
-            self.log('ptl/max_val_accuracy', avg_acc, sync_dist=True)
+            self.log("ptl/max_val_accuracy", avg_acc, sync_dist=True)
         self.eval_loss.clear()
         self.eval_accuracy.clear()
 
@@ -101,9 +103,9 @@ class MNISTClassifier(pl.LightningModule):
         )
 
         return {
-            'optimizer': optimizer,
-            'lr_scheduler': lr_scheduler,
-            'monitor': 'ptl/val_loss',
+            "optimizer": optimizer,
+            "lr_scheduler": lr_scheduler,
+            "monitor": "ptl/val_loss",
         }
 
 
@@ -112,14 +114,14 @@ class MNISTDataModule(pl.LightningDataModule):
         super().__init__()
         self.config = config
         self.batch_size = config.batch_size
-        if config.dataset_name in ['MNIST', 'EMNIST', 'FashionMNIST']:
+        if config.dataset_name in ["MNIST", "EMNIST", "FashionMNIST"]:
             normalize_transform = torchvision_transforms.Normalize((0.1307,), (0.3081,))
-        elif config.dataset_name == 'CIFAR10':
+        elif config.dataset_name == "CIFAR10":
             normalize_transform = torchvision_transforms.Normalize(
                 (0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)
             )
         else:
-            raise ValueError(f'Unknown dataset {config.dataset_name}')
+            raise ValueError(f"Unknown dataset {config.dataset_name}")
 
         self.transforms = torchvision_transforms.Compose(
             [
@@ -132,8 +134,8 @@ class MNISTDataModule(pl.LightningDataModule):
         self.num_workers = config.num_workers
 
     def setup(self, stage=None):
-        if stage == 'fit':
-            with FileLock(f'{self.config.dataset_dir}/.lock'):
+        if stage == "fit":
+            with FileLock(f"{self.config.dataset_dir}/.lock"):
                 # TODO: Train/Val datasets need splits with disjoint sets of angles.
                 dataset = g_dataset.AugmentedDataset(
                     self.config.dataset_dir,
@@ -146,7 +148,9 @@ class MNISTDataModule(pl.LightningDataModule):
                 )
                 val_count = int(len(dataset) * 0.2)
                 train_count = len(dataset) - val_count
-                self.data_train, self.data_val = random_split(dataset, [train_count, val_count])
+                self.data_train, self.data_val = random_split(
+                    dataset, [train_count, val_count]
+                )
 
                 self.data_test = g_dataset.AugmentedDataset(
                     self.config.dataset_dir,
@@ -185,16 +189,16 @@ class MNISTDataModule(pl.LightningDataModule):
         )
 
 
-if __name__ == '__main__':
-    torch.set_float32_matmul_precision('medium')
+if __name__ == "__main__":
+    torch.set_float32_matmul_precision("medium")
     config = read_config_from_file()
     pl.seed_everything(config.seed)
 
     dm = MNISTDataModule(config)
 
-    model = MNISTClassifier(config)
+    model = Classifier(config)
 
-    learning_rate_monitor = pl_callbacks.LearningRateMonitor(logging_interval='step')
+    learning_rate_monitor = pl_callbacks.LearningRateMonitor(logging_interval="step")
 
     trainer_callbacks = [
         learning_rate_monitor,
@@ -205,8 +209,8 @@ if __name__ == '__main__':
 
     trainer = pl.Trainer(
         devices=config.gpu_count,
-        accelerator='gpu',
-        strategy='ddp',
+        accelerator="gpu",
+        strategy="ddp",
         enable_progress_bar=config.progress_bar,
         log_every_n_steps=config.log_every_n_steps,
         max_epochs=config.max_epochs,
