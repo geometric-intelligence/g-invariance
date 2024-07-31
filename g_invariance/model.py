@@ -2,6 +2,8 @@
 various pooling approaches.
 """
 
+import math
+
 import torch
 import torch.nn.functional as F
 from escnn import gspaces
@@ -9,7 +11,6 @@ from torch import nn
 
 import g_invariance.modules as gtc_modules
 import g_invariance.pooling as gtc_pooling
-import math
 
 
 class VanillaNet(nn.Module):

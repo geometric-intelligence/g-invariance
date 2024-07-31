@@ -6,7 +6,6 @@ import pytorch_lightning.callbacks as pl_callbacks
 import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
-import wandb
 import yaml
 from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
@@ -14,6 +13,7 @@ from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
 
 import g_invariance.dataset as g_dataset
+import wandb
 from g_invariance import model, rich_gi
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), 'config.yaml')
