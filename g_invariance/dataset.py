@@ -1,12 +1,26 @@
 import os
 import os.path
+import tempfile
 from typing import Any, Callable, Optional, Tuple
 
 import numpy as np
+import requests
 from PIL import Image
 from skimage.transform import rotate
 from torchvision import datasets
-from IPython import embed
+
+
+def download_retinamnist():
+    url = 'https://zenodo.org/records/10519652/files/retinamnist.npz?download=1'
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        file_path = f'{temp_dir}/retinamnist.npz'
+
+        response = requests.get(url)
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
+
+        return np.load(file_path)
 
 
 class AugmentedDataset(datasets.VisionDataset):
@@ -40,13 +54,21 @@ class AugmentedDataset(datasets.VisionDataset):
             self.targets = np.load(self._target_path)
             return
 
-        allowed_datasets = ['MNIST', 'EMNIST', 'FashionMNIST', 'CIFAR10']
+        allowed_datasets = ['MNIST', 'EMNIST', 'FashionMNIST', 'CIFAR10', 'retinaMNIST']
         if dataset_name not in allowed_datasets:
-            raise ValueError(f'dataset_name must be one of {datasets}')
+            raise ValueError(f'dataset_name must be one of {allowed_datasets}')
         kwargs = {}
         if dataset_name == 'EMNIST':
             kwargs = {'split': 'letters'}
-        ds = getattr(datasets, dataset_name)(root, train=train, download=True, **kwargs)
+
+        if dataset_name == 'retinaMNIST':
+            ds = download_retinamnist()
+            if train:
+                ds = [d for d in zip(ds['train_images'], ds['train_labels'])]
+            else:
+                ds = [d for d in zip(ds['val_images'], ds['val_labels'])]
+        else:
+            ds = getattr(datasets, dataset_name)(root, train=train, download=True, **kwargs)
 
         data = []
         targets = []
