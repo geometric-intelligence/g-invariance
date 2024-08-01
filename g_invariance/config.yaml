@@ -10,7 +10,7 @@ progress_bar: true
 # Data
 data_augmentation: "so2"
 augmentation_factor: 1
-img_size: 16
+img_size: 32
 
 # Training
 batch_size: 128
@@ -20,12 +20,12 @@ lr: 0.001
 max_epochs: 15
 
 # Model specs
-model_name: "GInvNet" # ConvNet, VanillaNet
+model_name: "CIFAR10Model" # ConvNet, VanillaNet
 # dimension is currently hardcoded in BSP
 N: 8
 pooling: "avg"
 group: "cyclic"
-dataset_name: "CIFAR10"
+dataset_name: "pathMNIST"
 n_input_channels: 3
 n_filters: 2
 circle_crop: true
