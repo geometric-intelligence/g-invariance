@@ -58,31 +58,61 @@ class ConvNet(nn.Module):
         return F.log_softmax(x, dim=1)
 
 
+class CIFAR10Model(nn.Module):
+    def __init__(self, config):
+        super(CIFAR10Model, self).__init__()
+        self.conv1 = torch.nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.conv2 = torch.nn.Conv2d(32, 32, kernel_size=3, padding=1)
+        self.conv3 = torch.nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.conv4 = torch.nn.Conv2d(64, 64, kernel_size=3, padding=1)
+        self.pool = torch.nn.MaxPool2d(2, 2)
+        self.dropout = torch.nn.Dropout(0.25)
+        self.fc1 = torch.nn.Linear(64 * 8 * 8, 512)
+        self.fc2 = torch.nn.Linear(512, 10)
+
+    def forward(self, x):
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.pool(x)
+        x = self.dropout(x)
+
+        x = F.relu(self.conv3(x))
+        x = F.relu(self.conv4(x))
+        x = self.pool(x)
+        x = self.dropout(x)
+
+        x = x.view(-1, 64 * 8 * 8)
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+        return F.log_softmax(x, dim=1)
+
+
 class GInvNet(nn.Module):
     POOLING_MAP = {
-        'bsp': gtc_pooling.BspGroupPooling,
-        'tc': gtc_pooling.TCGroupPooling,
-        'max': gtc_pooling.GroupPooling,
-        'avg': gtc_pooling.AvgGroupPooling,
+        "bsp": gtc_pooling.BspGroupPooling,
+        "tc": gtc_pooling.TCGroupPooling,
+        "max": gtc_pooling.GroupPooling,
+        "avg": gtc_pooling.AvgGroupPooling,
     }
 
     def __init__(self, config):
         super(GInvNet, self).__init__()
-        if config.group == 'cyclic':
+        if config.group == "cyclic":
             action = gspaces.rot2dOnR2
-        elif config.group == 'dihedral':
+        elif config.group == "dihedral":
             action = gspaces.flipRot2dOnR2
         else:
-            raise ValueError(f'unknown group {config.group}')
-
+            raise ValueError(f"unknown group {config.group}")
+        N_CHAN = 16
         conv_block = gtc_modules.GonR2ConvBlock(
             N=config.N,
             action=action,
             n_channels=config.n_filters,
-            kernel_size=config.img_size,
+            kernel_size=28,
             padding=0,
             bias=False,
-            n_input_channels=config.n_input_channels,
+            n_input_channels=N_CHAN,
         )
         self.pooling_output_size = self.pooling_output_size(
             config.pooling, config.n_filters, config.group, config.N
@@ -99,6 +129,7 @@ class GInvNet(nn.Module):
             n=config.N,
         )
         self.model = self.model = torch.nn.Sequential(
+            nn.Conv2d(config.n_input_channels, N_CHAN, 5),
             conv_block,
             pooling_block,
             gtc_modules.GTtoT(),
@@ -106,8 +137,13 @@ class GInvNet(nn.Module):
             gtc_modules.FullyConnectedBlock(
                 in_dim=self.pooling_output_size, out_dim=self.first_fc_size
             ),
-            gtc_modules.FullyConnectedBlock(in_dim=self.first_fc_size, out_dim=config.fc_sizes[0]),
-            gtc_modules.FullyConnectedBlock(in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]),
+            gtc_modules.FullyConnectedBlock(
+                in_dim=self.first_fc_size, out_dim=config.fc_sizes[0]
+            ),
+            gtc_modules.FullyConnectedBlock(
+                in_dim=config.fc_sizes[0], out_dim=config.fc_sizes[1]
+            ),
+            nn.Dropout(config.dropout_rate),
             gtc_modules.Linear(in_dim=config.fc_sizes[1], out_dim=config.fc_sizes[2]),
         )
 
@@ -138,24 +174,24 @@ class GInvNet(nn.Module):
 
     @staticmethod
     def pooling_output_size(pooling_type, n_filters, group_type, group_size):
-        if pooling_type in ['max', 'avg']:
+        if pooling_type in ["max", "avg"]:
             return n_filters
-        elif pooling_type == 'bsp':
-            if group_type == 'cyclic':
+        elif pooling_type == "bsp":
+            if group_type == "cyclic":
                 return 2 * n_filters * group_size
-            elif group_type == 'dihedral':
+            elif group_type == "dihedral":
                 return int(n_filters * (math.floor((group_size - 1) / 2) * 16 + 5))
             else:
-                raise ValueError(f'unknown group_type: {group_type}')
-        elif pooling_type == 'tc':
-            if group_type == 'cyclic':
+                raise ValueError(f"unknown group_type: {group_type}")
+        elif pooling_type == "tc":
+            if group_type == "cyclic":
                 return int(group_size * (group_size + 1) / 2 * n_filters)
-            elif group_type == 'dihedral':
+            elif group_type == "dihedral":
                 return int(group_size * (group_size * 2 + 1) * n_filters)
             else:
-                raise ValueError(f'unknown group_type: {group_type}')
+                raise ValueError(f"unknown group_type: {group_type}")
         else:
-            raise ValueError(f'unkown pooling_type: {pooling_type}')
+            raise ValueError(f"unkown pooling_type: {pooling_type}")
 
     def forward(self, x):
         return F.log_softmax(self.model(x), dim=1)
