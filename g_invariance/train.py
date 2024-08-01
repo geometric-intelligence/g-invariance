@@ -116,7 +116,7 @@ class MNISTDataModule(pl.LightningDataModule):
         self.batch_size = config.batch_size
         if config.dataset_name in ["MNIST", "EMNIST", "FashionMNIST"]:
             normalize_transform = torchvision_transforms.Normalize((0.1307,), (0.3081,))
-        elif config.dataset_name == "CIFAR10":
+        elif config.dataset_name in ["CIFAR10", "retinaMNIST"]:
             normalize_transform = torchvision_transforms.Normalize(
                 (0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)
             )
