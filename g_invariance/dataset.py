@@ -22,8 +22,9 @@ def download_retinamnist():
 
         return np.load(file_path)
 
+
 def download_pathmnist():
-    url = "https://zenodo.org/records/10519652/files/pathmnist.npz?download=1"
+    url = 'https://zenodo.org/records/10519652/files/pathmnist.npz?download=1'
     with tempfile.TemporaryDirectory() as temp_dir:
         file_path = f'{temp_dir}/pathmnist.npz'
 
@@ -32,6 +33,7 @@ def download_pathmnist():
             f.write(response.content)
 
         return np.load(file_path)
+
 
 class AugmentedDataset(datasets.VisionDataset):
     """Augmented dataset"""
@@ -64,7 +66,14 @@ class AugmentedDataset(datasets.VisionDataset):
             self.targets = np.load(self._target_path)
             return
 
-        allowed_datasets = ['MNIST', 'EMNIST', 'FashionMNIST', 'CIFAR10', 'retinaMNIST', 'pathMNIST']
+        allowed_datasets = [
+            'MNIST',
+            'EMNIST',
+            'FashionMNIST',
+            'CIFAR10',
+            'retinaMNIST',
+            'pathMNIST',
+        ]
         if dataset_name not in allowed_datasets:
             raise ValueError(f'dataset_name must be one of {allowed_datasets}')
         kwargs = {}
