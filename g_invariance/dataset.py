@@ -6,7 +6,6 @@ import numpy as np
 from PIL import Image
 from skimage.transform import rotate
 from torchvision import datasets
-from IPython import embed
 
 
 class AugmentedDataset(datasets.VisionDataset):
