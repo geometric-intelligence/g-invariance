@@ -6,7 +6,6 @@ import pytorch_lightning.callbacks as pl_callbacks
 import pytorch_lightning.loggers as pl_loggers
 import torch
 import torch.nn.functional as F
-import wandb
 import yaml
 from filelock import FileLock
 from torch.utils.data import DataLoader, random_split
@@ -14,6 +13,7 @@ from torchmetrics import Accuracy
 from torchvision import transforms as torchvision_transforms
 
 import g_invariance.dataset as g_dataset
+import wandb
 from g_invariance import model, rich_gi
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.yaml")
@@ -116,7 +116,7 @@ class MNISTDataModule(pl.LightningDataModule):
         self.batch_size = config.batch_size
         if config.dataset_name in ["MNIST", "EMNIST", "FashionMNIST"]:
             normalize_transform = torchvision_transforms.Normalize((0.1307,), (0.3081,))
-        elif config.dataset_name == "CIFAR10":
+        elif config.dataset_name in ["CIFAR10", "retinaMNIST", "pathMNIST"]:
             normalize_transform = torchvision_transforms.Normalize(
                 (0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)
             )
