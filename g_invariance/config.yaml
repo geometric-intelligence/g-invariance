@@ -9,7 +9,7 @@ progress_bar: true
 
 # Data
 data_augmentation: "so2"
-augmentation_factor: 8
+augmentation_factor: 4
 img_size: 32
 
 # Training
@@ -20,7 +20,7 @@ lr: 0.001
 max_epochs: 15
 
 # Model specs
-model_name: "GInvNet" # ConvNet, VanillaNet
+model_name: "ConvNet" # ConvNet, VanillaNet
 # dimension is currently hardcoded in BSP
 N: 8
 pooling: "bsp"
@@ -33,4 +33,4 @@ circle_crop: true
 # from target param count
 target_params_count: 1000000
 fc_sizes: [64, 64, 10]
-dropout_rate: 0.1
+dropout_rate: 0.2
