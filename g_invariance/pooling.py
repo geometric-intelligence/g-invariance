@@ -380,7 +380,7 @@ class AvgGroupPooling(EquivariantModule):
 class BspGroupPooling(GroupPooling):
     def __init__(self, in_type, group_type='cyclic', idx=None, n=8, **kwargs):
         """
-        group_type should be "cyclic" or "dihedral"
+        group_type should be "cyclic" or "dihedral" or "octahedral"
 
         Parameters
         ----------
@@ -481,9 +481,10 @@ class BspGroupPooling(GroupPooling):
 
         "Fourier" is in quote, because it cannot really be called Fourier since \rho \otimes \rho' 
         is not necessarily irreducible."""
+        device = f.device
         tensor_rep = [np.kron(irrep(g), irrep_prime(g)) for g in group.elements]
         return sum([
-            torch.einsum("bf,de->bfde", f[:, :, i_g], torch.tensor(tensor_rep[i_g])) 
+            torch.einsum("bf,de->bfde", f[:, :, i_g], torch.tensor(tensor_rep[i_g]).to(device)) 
             for i_g in range(len(group.elements))])
 
     
@@ -775,6 +776,8 @@ class BspGroupPooling(GroupPooling):
             elif self.group_type == 'dihedral':
                 n = int(fm.shape[2] / 2)
                 output = self.bispectrum_vectorized_batch_dihedral(fm.squeeze(), n)
+            elif self.group_type == 'octahedral':
+                output = self.bispectrum_vectorized_batch_octahedral(fm.squeeze())
 
             """
             if self.idx is None:
