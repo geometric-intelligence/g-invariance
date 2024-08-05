@@ -52,7 +52,7 @@ def search_pooling():
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project='g-invariance-search-cifar-pooling-lr')],
+        callbacks=[WandbLoggerCallback(project='g-invariance-search-cifar-pooling-nfilter16')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
             checkpoint_score_attribute='ptl/val_accuracy',
@@ -86,15 +86,15 @@ def search_pooling():
 
     def n_filters(spec):
         n_filters_map = {
-            'cyclic': {'CIFAR10': 8},
-            'dihedral': {'CIFAR10': 8},
+            'cyclic': {'CIFAR10': 16},
+            'dihedral': {'CIFAR10': 16},
         }
         config = spec['train_loop_config']
         return n_filters_map[config['group']][config['dataset_name']]
 
     def fc_sizes(spec):
         fc_sizes_map = {
-            'CIFAR10': [128, 64, 10],
+            'CIFAR10': [64, 64, 10],
         }
         config = spec['train_loop_config']
         return fc_sizes_map[config['dataset_name']]
@@ -129,7 +129,7 @@ def search_pooling():
             metric='ptl/val_accuracy',
             mode='max',
             # TODO: Infer num samples from search space.
-            num_samples=10,
+            num_samples=2,
             trial_name_creator=trial_str_creator,
         ),
     )
@@ -142,7 +142,7 @@ def search_filters():
     )
 
     run_config = RunConfig(
-        callbacks=[WandbLoggerCallback(project='g-invariance-cifar10-search')],
+        callbacks=[WandbLoggerCallback(project='g-invariance-cifar10-search-filters-50epoch')],
         checkpoint_config=CheckpointConfig(
             num_to_keep=1,
             checkpoint_score_attribute='ptl/val_accuracy',
@@ -214,7 +214,7 @@ def search_filters():
             metric='ptl/val_accuracy',
             mode='max',
             # TODO: Infer num samples from search space.
-            num_samples=10,
+            num_samples=2,
             trial_name_creator=trial_str_creator,
         ),
     )
@@ -269,7 +269,7 @@ def search_group_size():
 
     def fc_sizes(spec):
         fc_sizes_map = {
-            'CIFAR': [64, 64, 10],
+            'CIFAR10': [64, 64, 10],
         }
         config = spec['train_loop_config']
         return fc_sizes_map[config['dataset_name']]
@@ -314,9 +314,9 @@ def search_group_size():
 
 
 if __name__ == '__main__':
-    results = search_pooling()
-    results.get_dataframe().to_csv('ray_results_seach_pooling.csv')
-    # results = search_filters()
+    #results = search_pooling()
+    #results.get_dataframe().to_csv('ray_results_seach_pooling.csv')
+    results = search_filters()
     # results.get_dataframe().to_csv('ray_results_filters.csv')
     # results = search_group_size()
     # results.get_dataframe().to_csv('ray_results_group_size.csv')
