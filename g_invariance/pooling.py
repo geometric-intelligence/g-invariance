@@ -5,6 +5,7 @@ import einops
 import numpy as np
 import torch
 from escnn.gspaces import *
+from escnn.group import *
 from escnn.nn import FieldType, GeometricTensor
 from escnn.nn.modules.equivariant_module import EquivariantModule
 from escnn.nn.modules.invariantmaps import GroupPooling
@@ -379,7 +380,7 @@ class AvgGroupPooling(EquivariantModule):
 class BspGroupPooling(GroupPooling):
     def __init__(self, in_type, group_type='cyclic', idx=None, n=8, **kwargs):
         """
-        group_type should be "cyclic" or "dihedral"
+        group_type should be "cyclic" or "dihedral" or "octahedral"
 
         Parameters
         ----------
@@ -417,6 +418,14 @@ class BspGroupPooling(GroupPooling):
         Input: A function f:G->C where G is the dihedral group D_n (symmetries of the n-gon).
         G = {e, a, a^2...,a^{n-1}, x, ax, a^2x,...,a^{n-1}x}.
         Output: returns the Fourier transform of f on G.
+
+        Parameters
+        ----------
+        f : array-like, shape=[..., k_filters, group_size]
+
+        Returns
+        -------
+        fhat : array-like, shape=[..., k_filters, 2, 2, n_irreps]
         """
         device = f.device
         n = int(f.shape[2] / 2)
@@ -454,6 +463,61 @@ class BspGroupPooling(GroupPooling):
         fhat[..., 1 : n2d + 1] += torch.sum(
             f[:, :, None, None, None, j_range + n] * rho1[None, None, :, :, :], dim=5
         )
+        return fhat
+
+
+    def fourier_coef(self, f, irrep, group):
+        """Compute Fourier coef of signal f at an irrep of the group."""
+        device = f.device
+        return  sum([
+            torch.einsum(
+                "bf,de->bfde", 
+                f[:, :, i_g],
+                torch.tensor(irrep(g))).to(device) 
+            for i_g, g in enumerate(group.elements)])    
+    
+    def fourier_coef_tensor(self, f, irrep, irrep_prime, group):
+        """Compute the "Fourier" coefficient F(\Theta)_{\rho \otimes \rho'}. 
+
+        "Fourier" is in quote, because it cannot really be called Fourier since \rho \otimes \rho' 
+        is not necessarily irreducible."""
+        device = f.device
+        tensor_rep = [np.kron(irrep(g), irrep_prime(g)) for g in group.elements]
+        return sum([
+            torch.einsum("bf,de->bfde", f[:, :, i_g], torch.tensor(tensor_rep[i_g]).to(device)) 
+            for i_g in range(len(group.elements))])
+
+    
+    def fourier_transform_vectorized_batch_octahedral(self, f):
+        """
+        Input: A function f:G->C where G is the octahedral group.
+        Output: returns the Fourier transform of f on G.
+
+        The octahedral group has 24 elements, thus group_size = 24.
+        The octahedral group has 5 irreps.
+
+        The irreps of the octahedral group have maximum dimension 3, which is why the 
+        output is of shape [..., k_filters, 3, 3, n_irreps].
+
+        Parameters
+        ----------
+        f : array-like, shape=[..., k_filters, group_size]
+
+        Returns
+        -------
+        fhat : array-like, shape=[..., k_filters, 3, 3, n_irreps]
+        """
+        n_irreps = 5
+        device = f.device
+        batch_size, k_filters, group_size = f.shape
+        fhat = torch.zeros(batch_size, k_filters, 3, 3, n_irreps).to(device)
+        group = OctahedralGroup()
+
+        for i_irrep, irrep in enumerate(group.irreps()):
+            # This assumes that the group elements in f are ordered in the same order a group.elements
+            fourier_coef = self.fourier_coef(self, f, irrep, group)
+            fhat[:, :, :irrep.size, ::irrep.size, i_irrep] = fourier_coef.to(device)
+
         return fhat
 
     def bispectrum_selective_vectorized_batch_cyclic(self, x):
@@ -509,6 +573,17 @@ class BspGroupPooling(GroupPooling):
         """
         Input: Fourier transform over D_n
         Output:  the bispectral elements needed for completeness
+
+        Parameters
+        ----------
+        x : array-like, shape=[..., k_filters, group_size]
+            Input: signal over the group Dn.
+        n : int
+            The group size of Dn is 2n+1
+
+        Returns
+        -------
+        _ : array-like, shape=[..., k_filters, n_bispectrum_scalar_elements]
         """
         device = x.device
         fhat = self.fourier_transform_vectorized_batch_dihedral(x)
@@ -594,6 +669,71 @@ class BspGroupPooling(GroupPooling):
         beta1i = beta1i.reshape((bs, cs, a * b * c))
         return torch.cat((beta0, beta10, beta1i), dim=2)
 
+    def bispectrum_vectorized_batch_octahedral(self, x):
+        """
+        Input: signal over Oh
+        Output:  the bispectral elements needed for completeness
+
+        Parameters
+        ----------
+        x : array-like, shape=[..., k_filters, group_size]
+            Input: signal over the group Oh.
+
+        Returns
+        -------
+        _ : array-like, shape=[..., k_filters, n_bispectrum_scalar_elements]
+        """
+        device = x.device
+        group = OctahedralGroup()
+        fhat = self.fourier_transform_vectorized_batch_octahedral(x)
+
+        batch_size, k_filters, _, _, n_irreps = fhat.shape
+
+        # We only need b00, b10, b11 and b12 which we compute below.
+
+        # beta00 - dim 0
+        irrep_0 = group.irreps()[0]
+        fourier_coef_0 = self.fourier_coef(x, irrep_0, group) # shape [b, k, 1, 1]
+
+        # TODO: make into batch computation
+        beta00 = abs(fourier_coef_0) ** 2 * fourier_coef_0 # shape is  [bs, k, 1, 1]
+        
+        # beta10 - dim 3
+        irrep_1 = group.irreps()[1]
+        fourier_coef_1 = self.fourier_coef(x, irrep_1, group) # shape [bs, k, 3, 3]
+
+        # TODO: make into batch computation
+        aux_matmul = torch.einsum("bkde,bkef->bkdf", fourier_coef_1.conj().transpose(2, 3), fourier_coef_1)
+        beta10 =  torch.einsum("bk,bkde->bkde", fourier_coef_0.conj().squeeze(), aux_matmul)
+        beta10 = beta10.real  # shape is [bs, k, 3, 3]
+
+        # beta11  - dim 9 (3*3)
+        beta11 = np.kron(fourier_coef_1, fourier_coef_1).conj().T @ self.fourier_coef_tensor(
+            irrep_1, irrep_1, group)   # shape [bs, k, 9, 9]
+
+        # beta12 - dim 9 (3*3)
+        irrep_2 = group.irreps()[2]
+        fourier_coef_2 = self.fourier_coef(x, irrep_2, group)
+
+        fourier_coef_tensor_12 = self.fourier_coef_tensor(x, irrep_1, irrep_2, group)
+        # shape is [bs, k, 9, 9]
+
+        aux = torch.zeros((batch_size, k_filters, 9, 9), dtype=torch.double)
+        for b in range(batch_size):
+            for k in range(k_filters):
+                aux_kron = torch.kron(fourier_coef_1[b, k, :, :], fourier_coef_2[b, k, :, :])
+                aux[b, k, :, :] = aux_kron.conj().T
+
+        beta12 = torch.einsum("bkde, bkef->bkdf", aux, fourier_coef_tensor_12) # shape is [bs, k, 9, 9]
+        
+        beta00 = beta00.reshape((batch_size, k_filters, -1))
+        beta10 = beta10.reshape((batch_size, k_filters, -1))
+        beta11 = beta11.reshape((batch_size, k_filters, -1))
+        beta12 = beta12.reshape((batch_size, k_filters, -1))
+
+        return torch.cat((beta00, beta10, beta11, beta12), dim=2)
+
+        
     def forward(self, input: GeometricTensor) -> GeometricTensor:
         """
 
@@ -636,6 +776,8 @@ class BspGroupPooling(GroupPooling):
             elif self.group_type == 'dihedral':
                 n = int(fm.shape[2] / 2)
                 output = self.bispectrum_vectorized_batch_dihedral(fm.squeeze(), n)
+            elif self.group_type == 'octahedral':
+                output = self.bispectrum_vectorized_batch_octahedral(fm.squeeze())
 
             """
             if self.idx is None:
