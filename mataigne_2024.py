@@ -341,7 +341,7 @@ def search_group_size():
 
 if __name__ == "__main__":
     results = search_pooling()
-    results.get_dataframe().to_csv("ray_results_seach_pooling.csv")
+    results.get_dataframe().to_csv("ray_results_search_pooling.csv")
     results = search_filters()
     results.get_dataframe().to_csv("ray_results_filters.csv")
     results = search_group_size()
